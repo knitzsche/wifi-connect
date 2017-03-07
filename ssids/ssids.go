@@ -10,10 +10,6 @@ import (
 	"github.com/godbus/dbus"
 )
 
-type options struct {
-	getSsids bool
-}
-
 func getDevices(conn *dbus.Conn) []string {
 	obj := conn.Object("org.freedesktop.NetworkManager", "/org/freedesktop/NetworkManager")
 	var devices []string
@@ -120,16 +116,7 @@ func connectAp(conn *dbus.Conn, ssid string, p string, ap2device map[string]stri
 	//fmt.Printf("===== activate call response:\n%v\n", resp)
 }
 
-func args() *options {
-	opts := &options{}
-	flag.BoolVar(&opts.getSsids, "get-ssids", false, "Connect to an AP")
-	flag.Parse()
-	return opts
-}
-
 func doit() {
-	opts := args()
-
 	conn, err := dbus.SystemBus()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Failed to connect to session bus:", err)
