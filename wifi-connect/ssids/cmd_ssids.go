@@ -1,4 +1,4 @@
-package ssids
+package main
 
 import (
 	"bufio"
