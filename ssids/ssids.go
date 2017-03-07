@@ -93,7 +93,7 @@ func getSSIDs(conn *dbus.Conn, APs []string, ssid2ap map[string]string) []SSID {
 	return SSIDs
 }
 
-func connectAp(conn *dbus.Conn, ssid string, p string, ap2device map[string]string, ssid2ap map[string]string) {
+func ConnectAp(conn *dbus.Conn, ssid string, p string, ap2device map[string]string, ssid2ap map[string]string) {
 	inner1 := make(map[string]dbus.Variant)
 	inner1["security"] = dbus.MakeVariant("802-11-wireless-security")
 
@@ -129,26 +129,4 @@ func Ssids() []SSID {
 	APs := getAccessPoints(conn, wifiDevices, ap2device)
 	SSIDs := getSSIDs(conn, APs, ssid2ap)
 	return SSIDs
-/*
-	if opts.getSsids {
-		var out string
-		for _, ssid := range SSIDs {
-			out += strings.TrimSpace(ssid.ssid) + ","
-		}
-		fmt.Printf("%s\n", out[:len(out)-1])
-		return
-	}
-	for _, ssid := range SSIDs {
-		fmt.Printf("    %v\n", ssid.ssid)
-	}
-	reader := bufio.NewReader(os.Stdin)
-	fmt.Print("Connect to SSID: ")
-	ssid, _ := reader.ReadString('\n')
-	ssid = strings.TrimSpace(ssid)
-	fmt.Print("PW: ")
-	pw, _ := reader.ReadString('\n')
-	pw = strings.TrimSpace(pw)
-	connectAp(conn, ssid, pw, ap2device, ssid2ap)
-	return
-*/
 }
