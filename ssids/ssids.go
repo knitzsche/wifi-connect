@@ -1,7 +1,6 @@
 package ssids
 
 import (
-	"bufio"
 	"fmt"
 	"os"
 	"strings"
@@ -150,6 +149,6 @@ func Ssids() []SSID {
 	pw, _ := reader.ReadString('\n')
 	pw = strings.TrimSpace(pw)
 	connectAp(conn, ssid, pw, ap2device, ssid2ap)
-*/
 	return
+*/
 }
