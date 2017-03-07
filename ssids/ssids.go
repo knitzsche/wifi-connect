@@ -115,7 +115,7 @@ func connectAp(conn *dbus.Conn, ssid string, p string, ap2device map[string]stri
 	//fmt.Printf("===== activate call response:\n%v\n", resp)
 }
 
-func doit() {
+func Ssids() []SSID {
 	conn, err := dbus.SystemBus()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Failed to connect to session bus:", err)
@@ -129,6 +129,8 @@ func doit() {
 	wifiDevices := getWifiDevices(conn, devices)
 	APs := getAccessPoints(conn, wifiDevices, ap2device)
 	SSIDs := getSSIDs(conn, APs, ssid2ap)
+	return SSIDs
+/*
 	if opts.getSsids {
 		var out string
 		for _, ssid := range SSIDs {
@@ -148,6 +150,6 @@ func doit() {
 	pw, _ := reader.ReadString('\n')
 	pw = strings.TrimSpace(pw)
 	connectAp(conn, ssid, pw, ap2device, ssid2ap)
-
+*/
 	return
 }
