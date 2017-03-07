@@ -94,7 +94,7 @@ func getSSIDs(conn *dbus.Conn, APs []string, ssid2ap map[string]string) []SSID {
 }
 
 func ConnectAp(ssid string, p string, ap2device map[string]string, ssid2ap map[string]string) {
-	conn = getSystemBus()
+	conn := getSystemBus()
 	inner1 := make(map[string]dbus.Variant)
 	inner1["security"] = dbus.MakeVariant("802-11-wireless-security")
 
@@ -120,10 +120,11 @@ func getSystemBus() *dbus.Conn {
 		fmt.Fprintln(os.Stderr, "Failed to connect to session bus:", err)
 		panic(1)
 	}
+	return conn
 }
 
 func Ssids() []SSID {
-	conn = getSystemBus()
+	conn := getSystemBus()
 
 	ap2device := make(map[string]string)
 	ssid2ap := make(map[string]string)
