@@ -2,7 +2,6 @@ package ssids
 
 import (
 	"bufio"
-	"flag"
 	"fmt"
 	"os"
 	"strings"
