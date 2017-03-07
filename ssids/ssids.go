@@ -77,7 +77,7 @@ func getSSIDs(conn *dbus.Conn, APs []string, ssid2ap map[string]string) []SSID {
 		}
 		found := false
 		for _, s := range SSIDs {
-			if s.ssid == ssidStr {
+			if s.Ssid == ssidStr {
 				found = true
 			}
 		}
