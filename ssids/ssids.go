@@ -56,8 +56,8 @@ func getAccessPoints(conn *dbus.Conn, devices []string, ap2device map[string]str
 }
 
 type SSID struct {
-	ssid string
-	apPath string
+	Ssid string
+	ApPath string
 }
 
 func getSSIDs(conn *dbus.Conn, APs []string, ssid2ap map[string]string) []SSID {
@@ -85,7 +85,7 @@ func getSSIDs(conn *dbus.Conn, APs []string, ssid2ap map[string]string) []SSID {
 			continue
 		}
 
-		Ssid := SSID{ssid: ssidStr, apPath: ap}
+		Ssid := SSID{Ssid: ssidStr, ApPath: ap}
 		SSIDs = append(SSIDs, Ssid)
 		ssid2ap[strings.TrimSpace(ssidStr)] = ap
 		//TODO: exclude ssid of device's own AP (the wifi-ap one)
