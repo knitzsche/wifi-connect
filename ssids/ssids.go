@@ -93,7 +93,8 @@ func getSSIDs(conn *dbus.Conn, APs []string, ssid2ap map[string]string) []SSID {
 	return SSIDs
 }
 
-func ConnectAp(conn *dbus.Conn, ssid string, p string, ap2device map[string]string, ssid2ap map[string]string) {
+func ConnectAp(ssid string, p string, ap2device map[string]string, ssid2ap map[string]string) {
+	conn = getSystemBus()
 	inner1 := make(map[string]dbus.Variant)
 	inner1["security"] = dbus.MakeVariant("802-11-wireless-security")
 
@@ -113,13 +114,16 @@ func ConnectAp(conn *dbus.Conn, ssid string, p string, ap2device map[string]stri
 	obj.Call("org.freedesktop.NetworkManager.AddAndActivateConnection", 0, outer, dbus.ObjectPath(ap2device[ssid2ap[ssid]]), dbus.ObjectPath(ssid2ap[ssid]))
 	//fmt.Printf("===== activate call response:\n%v\n", resp)
 }
-
-func Ssids() []SSID {
+func getSystemBus() *dbus.Conn {
 	conn, err := dbus.SystemBus()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Failed to connect to session bus:", err)
-		os.Exit(1)
+		panic(1)
 	}
+}
+
+func Ssids() []SSID {
+	conn = getSystemBus()
 
 	ap2device := make(map[string]string)
 	ssid2ap := make(map[string]string)
