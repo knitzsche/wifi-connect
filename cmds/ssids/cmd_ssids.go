@@ -7,6 +7,8 @@ import (
 	"os"
 	"strings"
 
+	"github.com/knitzsche/ssids"
+
 )
 
 func args() *options {
@@ -28,10 +30,10 @@ func doit() {
 	ap2device := make(map[string]string)
 	ssid2ap := make(map[string]string)
 
-	devices := getDevices(conn)
-	wifiDevices := getWifiDevices(conn, devices)
-	APs := getAccessPoints(conn, wifiDevices, ap2device)
-	SSIDs := getSSIDs(conn, APs, ssid2ap)
+	devices := ssids.getDevices(conn)
+	wifiDevices := ssids.getWifiDevices(conn, devices)
+	APs := ssids.getAccessPoints(conn, wifiDevices, ap2device)
+	SSIDs := ssids.getSSIDs(conn, APs, ssid2ap)
 	if opts.getSsids {
 		var out string
 		for _, ssid := range SSIDs {
@@ -50,7 +52,7 @@ func doit() {
 	fmt.Print("PW: ")
 	pw, _ := reader.ReadString('\n')
 	pw = strings.TrimSpace(pw)
-	connectAp(conn, ssid, pw, ap2device, ssid2ap)
+	//connectAp(conn, ssid, pw, ap2device, ssid2ap)
 
 	return
 }
