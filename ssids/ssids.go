@@ -123,7 +123,7 @@ func getSystemBus() *dbus.Conn {
 	return conn
 }
 
-func Ssids() []SSID {
+func Ssids() ([]SSID, map[string]string, map[string]string) {
 	conn := getSystemBus()
 
 	ap2device := make(map[string]string)
@@ -133,5 +133,5 @@ func Ssids() []SSID {
 	wifiDevices := getWifiDevices(conn, devices)
 	APs := getAccessPoints(conn, wifiDevices, ap2device)
 	SSIDs := getSSIDs(conn, APs, ssid2ap)
-	return SSIDs
+	return SSIDs, ap2device, ssid2ap
 }
