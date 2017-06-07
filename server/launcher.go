@@ -23,7 +23,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/CanonicalLtd/UCWifiConnect/utils"
+	"launchpad.net/wifi-connect/utils"
 )
 
 const (

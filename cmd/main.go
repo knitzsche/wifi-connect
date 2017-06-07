@@ -24,10 +24,10 @@ import (
 	"os"
 	"strings"
 
-	"github.com/CanonicalLtd/UCWifiConnect/netman"
-	"github.com/CanonicalLtd/UCWifiConnect/server"
-	"github.com/CanonicalLtd/UCWifiConnect/utils"
-	"github.com/CanonicalLtd/UCWifiConnect/wifiap"
+	"launchpad.net/wifi-connect/netman"
+	"launchpad.net/wifi-connect/server"
+	"launchpad.net/wifi-connect/utils"
+	"launchpad.net/wifi-connect/wifiap"
 
 	"github.com/gorilla/mux"
 )

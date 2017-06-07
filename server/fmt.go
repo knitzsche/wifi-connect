@@ -1,7 +1,7 @@
 package server
 
 import (
-	"github.com/CanonicalLtd/UCWifiConnect/utils"
+	"launchpad.net/wifi-connect/utils"
 )
 
 // Errorf returns a new instance implementing error interface taken a formatted string and

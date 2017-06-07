@@ -3,7 +3,7 @@ package server
 import (
 	"testing"
 
-	"github.com/CanonicalLtd/UCWifiConnect/utils"
+	"launchpad.net/wifi-connect/utils"
 )
 
 const (

@@ -31,7 +31,11 @@ parts:
   go:
     plugin: go
     source: . 
-    go-importpath: github.com/CanonicalLtd/UCWifiConnect
+    go-importpath: launchpad.net/wifi-connect
+    install: |
+      export GOPATH=$PWD/../go
+      cd $GOPATH/src/launchpad.net/wifi-connect
+      ./run-checks all
   assets:
     plugin: dump
     source: .

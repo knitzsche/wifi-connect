@@ -24,11 +24,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/CanonicalLtd/UCWifiConnect/avahi"
-	"github.com/CanonicalLtd/UCWifiConnect/netman"
-	"github.com/CanonicalLtd/UCWifiConnect/server"
-	"github.com/CanonicalLtd/UCWifiConnect/utils"
-	"github.com/CanonicalLtd/UCWifiConnect/wifiap"
+	"launchpad.net/wifi-connect/avahi"
+	"launchpad.net/wifi-connect/netman"
+	"launchpad.net/wifi-connect/server"
+	"launchpad.net/wifi-connect/utils"
+	"launchpad.net/wifi-connect/wifiap"
 )
 
 // enum to track current system state

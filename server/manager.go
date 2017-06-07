@@ -20,7 +20,7 @@ package server
 import (
 	"os"
 
-	"github.com/CanonicalLtd/UCWifiConnect/utils"
+	"launchpad.net/wifi-connect/utils"
 )
 
 // Enum of available server options
