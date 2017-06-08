@@ -33,6 +33,9 @@ parts:
     plugin: go
     source: . 
     go-importpath: launchpad.net/wifi-connect
+    build-packages:
+      # needed by go get
+      - bzr
     install: |
       export GOPATH=$PWD/../go
       cd $GOPATH/src/launchpad.net/wifi-connect
