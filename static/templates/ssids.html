@@ -58,6 +58,9 @@
                 </table>
                 </div>
                 </fieldset>
+                </div class="twelve-col">
+                <input type="button" value="Refresh SSIDs" class="button--primary" onclick="do_refresh_ssids()"/>
+                </div>
             </div>
         </div>
     </div>
@@ -103,6 +106,10 @@ function do_connect(i) {
             alert("No SSID provided to connect to")
         }
     }  
+}
+
+function do_refresh_ssids() {
+    window.location.reload('/refresh')
 }
 </script>
 </body>

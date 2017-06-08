@@ -19,10 +19,13 @@ package server
 
 import (
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"text/template"
+	"time"
 
 	"github.com/CanonicalLtd/UCWifiConnect/netman"
 	"github.com/CanonicalLtd/UCWifiConnect/utils"
@@ -121,4 +124,81 @@ func ConnectHandler(w http.ResponseWriter, r *http.Request) {
 
 	waitPath := os.Getenv("SNAP_COMMON") + "/startingApConnect"
 	utils.RemoveFlagFile(waitPath)
+}
+
+// scanSsids sets wlan0 to be managed and then scans
+// for ssids. If found, write the ssids (comma separated)
+// to path and return true, else return false.
+func scanSsids(path string, c *netman.Client) bool {
+	manage(c)
+	SSIDs, _, _ := c.Ssids()
+	//only write SSIDs when found
+	if len(SSIDs) > 0 {
+		var out string
+		for _, ssid := range SSIDs {
+			out += strings.TrimSpace(ssid.Ssid) + ","
+		}
+		out = out[:len(out)-1]
+		err := ioutil.WriteFile(path, []byte(out), 0644)
+		if err != nil {
+			fmt.Println("== wifi-connect: Error writing SSID(s) to ", path)
+		} else {
+			fmt.Println("== wifi-connect: SSID(s) obtained")
+			return true
+		}
+	}
+	fmt.Println("== wifi-connect: No SSID found")
+	return false
+}
+
+// unmanage sets wlan0 to be unmanaged by network manager if it
+// is managed
+func unmanage(c *netman.Client) {
+	ifaces, _ := c.WifisManaged(c.GetWifiDevices(c.GetDevices()))
+	if _, ok := ifaces["wlan0"]; ok {
+		c.SetIfaceManaged("wlan0", false, c.GetWifiDevices(c.GetDevices()))
+	}
+}
+
+// manage sets wlan0 to not managed by network manager
+func manage(c *netman.Client) {
+	c.SetIfaceManaged("wlan0", true, c.GetWifiDevices(c.GetDevices()))
+}
+
+// RefreshHandler handles ssids refreshment
+func RefreshHandler(w http.ResponseWriter, r *http.Request) {
+
+	c := netman.DefaultClient()
+	cw := wifiap.DefaultClient()
+
+	unmanage(c)
+
+	apUp, err := cw.Enabled()
+	if err != nil {
+		fmt.Println(Sprintf("An error happened while requesting current AP status: %v\n", err))
+		return
+	}
+
+	if apUp {
+		err := cw.Disable()
+		if err != nil {
+			fmt.Println(Sprintf("An error happened while bringing AP down: %v\n", err))
+			return
+		}
+	}
+
+	for found := scanSsids(utils.SsidsFile, c); !found; found = scanSsids(utils.SsidsFile, c) {
+		time.Sleep(5 * time.Second)
+	}
+
+	unmanage(c)
+
+	err = cw.Enable()
+	if err != nil {
+		fmt.Println(Sprintf("An error happened while bringing AP up: %v\n", err))
+		return
+	}
+
+	// now it is needed to update UI
+	SsidsHandler(w, r)
 }
