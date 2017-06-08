@@ -23,11 +23,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/CanonicalLtd/UCWifiConnect/utils"
-)
-
-const (
-	address = ":8080"
+	"launchpad.net/wifi-connect/utils"
 )
 
 // Server running state
@@ -40,6 +36,9 @@ const (
 
 // RunningState enum defining which server is up and running
 type RunningState int
+
+// Address where server is listening
+var Address = ":8080"
 
 // State holds current server state
 var State = Stopped

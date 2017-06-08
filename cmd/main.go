@@ -25,11 +25,10 @@ import (
 	"strings"
 	"sync"
 
+	"launchpad.net/wifi-connect/netman"
 	"launchpad.net/wifi-connect/server"
-
-	"github.com/CanonicalLtd/UCWifiConnect/netman"
-	"github.com/CanonicalLtd/UCWifiConnect/utils"
-	"github.com/CanonicalLtd/UCWifiConnect/wifiap"
+	"launchpad.net/wifi-connect/utils"
+	"launchpad.net/wifi-connect/wifiap"
 )
 
 func help() string {
@@ -224,12 +223,33 @@ func main() {
 		pw, _ := reader.ReadString('\n')
 		pw = strings.TrimSpace(pw)
 		c.ConnectAp(ssid, pw, ap2device, ssid2ap)
-	case "management-up":
+	case "management":
+		server.Address = ":8081"
 		if err := server.StartManagementServer(); err != nil {
 			fmt.Printf("Could not start management server: %v\n", err)
 			return
 		}
 		waitForCtrlC()
+	case "operational":
+		server.Address = ":8081"
+		if err := server.StartOperationalServer(); err != nil {
+			fmt.Printf("Could not start operational server: %v\n", err)
+			return
+		}
+		waitForCtrlC()
+	case "set-portal-password":
+		if len(os.Args) < 3 {
+			fmt.Println("Error: no string to hash provided")
+			return
+		}
+		if len(os.Args[2]) < 8 {
+			fmt.Println("Error: password must be at least 8 characters long")
+		}
+		b, err := utils.HashIt(os.Args[2])
+		if err != nil {
+			fmt.Println("Error hashing:", err)
+		}
+		fmt.Println(string(b))
 	default:
 		fmt.Println("Error. Your command is not supported. Please try 'help'")
 	}
