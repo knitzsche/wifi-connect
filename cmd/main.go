@@ -20,16 +20,16 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"net/http"
 	"os"
+	"os/signal"
 	"strings"
+	"sync"
+
+	"launchpad.net/wifi-connect/server"
 
 	"github.com/CanonicalLtd/UCWifiConnect/netman"
-	"github.com/CanonicalLtd/UCWifiConnect/server"
 	"github.com/CanonicalLtd/UCWifiConnect/utils"
 	"github.com/CanonicalLtd/UCWifiConnect/wifiap"
-
-	"github.com/gorilla/mux"
 )
 
 func help() string {
@@ -49,20 +49,6 @@ Commands:
 	return text
 }
 
-func handler() *mux.Router {
-	router := mux.NewRouter()
-
-	// Pages routes
-	router.HandleFunc("/", server.SsidsHandler).Methods("GET")
-	router.HandleFunc("/connect", server.ConnectHandler).Methods("POST")
-
-	// Resources path
-	fs := http.StripPrefix("/static/", http.FileServer(http.Dir(server.ResourcesPath)))
-	router.PathPrefix("/static/").Handler(fs)
-
-	return router
-}
-
 // checkSudo return false if the current user is not root, else true
 func checkSudo() bool {
 	if os.Geteuid() != 0 {
@@ -70,6 +56,19 @@ func checkSudo() bool {
 		return false
 	}
 	return true
+}
+
+func waitForCtrlC() {
+	var endWaiter sync.WaitGroup
+	endWaiter.Add(1)
+	var signalChannel chan os.Signal
+	signalChannel = make(chan os.Signal, 1)
+	signal.Notify(signalChannel, os.Interrupt)
+	go func() {
+		<-signalChannel
+		endWaiter.Done()
+	}()
+	endWaiter.Wait()
 }
 
 func main() {
@@ -226,7 +225,11 @@ func main() {
 		pw = strings.TrimSpace(pw)
 		c.ConnectAp(ssid, pw, ap2device, ssid2ap)
 	case "management-up":
-		http.ListenAndServe(":8081", handler())
+		if err := server.StartManagementServer(); err != nil {
+			fmt.Printf("Could not start management server: %v\n", err)
+			return
+		}
+		waitForCtrlC()
 	default:
 		fmt.Println("Error. Your command is not supported. Please try 'help'")
 	}
