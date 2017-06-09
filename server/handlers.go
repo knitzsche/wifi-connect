@@ -214,9 +214,6 @@ func manage(c *netman.Client) {
 // RefreshHandler handles ssids refreshment
 func RefreshHandler(w http.ResponseWriter, r *http.Request) {
 
-	//TODO TRACE
-	fmt.Println("REFRESH HANDLER")
-
 	c := netman.DefaultClient()
 	cw := wifiap.DefaultClient()
 
@@ -248,9 +245,7 @@ func RefreshHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	//TODO TRACE
-	fmt.Println("GOING TO SSIDS HANDLER")
-
-	// now it is needed to update UI
+	// Try to update UI, though it won't probably be possible as far as it is needed to bring down/up AP
+	// in a step before.
 	ManagementHandler(w, r)
 }
