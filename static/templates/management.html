@@ -71,8 +71,8 @@
                 </table>
                 </div>
                 </fieldset>
-                </div class="twelve-col">
-                <input type="button" value="Refresh SSIDs" class="button--primary" onclick="do_refresh_ssids()"/>
+                <div>
+                    <input type="button" value="Refresh SSIDs" class="button--primary" onclick="do_refresh()"/>
                 </div>
             </div>
         </div>
@@ -156,6 +156,14 @@ function do_connect(i) {
 function do_refresh_ssids() {
     window.location.reload('/refresh')
 }
+
+function do_refresh() {
+    $.ajax({
+      url: "/refresh"
+    }).done(function () {
+        console.log("refresh requested");
+    })
+} 
 </script>
 </body>
 </html>
