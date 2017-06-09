@@ -20,6 +20,7 @@ package netman
 import (
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"strings"
 	"time"
@@ -371,4 +372,43 @@ func (c *Client) WifisManaged(wifiDevices []string) (map[string]string, error) {
 		}
 	}
 	return ifaces, nil
+}
+
+// Unmanage sets wlan0 to be Unmanaged by network manager if it
+// is managed
+func (c *Client) Unmanage() {
+	ifaces, _ := c.WifisManaged(c.GetWifiDevices(c.GetDevices()))
+	if _, ok := ifaces["wlan0"]; ok {
+		c.SetIfaceManaged("wlan0", false, c.GetWifiDevices(c.GetDevices()))
+	}
+}
+
+// Manage sets wlan0 to not managed by network manager
+func (c *Client) Manage() {
+	c.SetIfaceManaged("wlan0", true, c.GetWifiDevices(c.GetDevices()))
+}
+
+// ScanSsids sets wlan0 to be managed and then scans
+// for ssids. If found, write the ssids (comma separated)
+// to path and return true, else return false.
+func (c *Client) ScanSsids(path string) bool {
+	c.Manage()
+	SSIDs, _, _ := c.Ssids()
+	//only write SSIDs when found
+	if len(SSIDs) > 0 {
+		var out string
+		for _, ssid := range SSIDs {
+			out += strings.TrimSpace(ssid.Ssid) + ","
+		}
+		out = out[:len(out)-1]
+		err := ioutil.WriteFile(path, []byte(out), 0644)
+		if err != nil {
+			fmt.Println("== wifi-connect: Error writing SSID(s) to ", path)
+		} else {
+			fmt.Println("== wifi-connect: SSID(s) obtained")
+			return true
+		}
+	}
+	fmt.Println("== wifi-connect: No SSID found")
+	return false
 }

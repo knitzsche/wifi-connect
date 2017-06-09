@@ -106,7 +106,7 @@ func main() {
 
 		// if wlan0 managed, set Unmanaged so that we can bring up wifi-ap
 		// properly
-		client.Unmanage(c)
+		c.Unmanage()
 
 		//wifi-ap UP?
 		wifiUp, err := cw.Enabled()
@@ -117,8 +117,8 @@ func main() {
 
 		//get ssids if wifi-ap Down
 		if !wifiUp {
-			found := client.ScanSsids(utils.SsidsFile, c)
-			client.Unmanage(c)
+			found := c.ScanSsids(utils.SsidsFile)
+			c.Unmanage()
 			if !found {
 				fmt.Println("== wifi-connect: Looping.")
 				continue
