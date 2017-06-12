@@ -37,6 +37,7 @@ const (
 	managementTemplatePath  = "/templates/management.html"
 	connectingTemplatePath  = "/templates/connecting.html"
 	operationalTemplatePath = "/templates/operational.html"
+	refreshingTemplatePath  = "/templates/refreshing.html"
 )
 
 // ResourcesPath absolute path to web static resources
@@ -214,6 +215,8 @@ func manage(c *netman.Client) {
 // RefreshHandler handles ssids refreshment
 func RefreshHandler(w http.ResponseWriter, r *http.Request) {
 
+	execTemplate(w, refreshingTemplatePath, nil)
+
 	c := netman.DefaultClient()
 	cw := wifiap.DefaultClient()
 
@@ -247,5 +250,5 @@ func RefreshHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Try to update UI, though it won't probably be possible as far as it is needed to bring down/up AP
 	// in a step before.
-	ManagementHandler(w, r)
+	//ManagementHandler(w, r)
 }
