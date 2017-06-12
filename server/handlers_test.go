@@ -23,7 +23,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/CanonicalLtd/UCWifiConnect/utils"
+	"launchpad.net/wifi-connect/utils"
 )
 
 func TestManagementHandler(t *testing.T) {

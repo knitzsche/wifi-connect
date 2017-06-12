@@ -11,7 +11,7 @@ Wifi-connect snap allows you to connect the device to an external wifi AP. First
 
 ## Issue tracking
 
-[Issues](https://github.com/CanonicalLtd/UCWifiConnect/issues)
+[Issues](https://bugs.launchpad.net/snappy-hwe-snaps)
 
 ## Use refreshed pi3 image
 

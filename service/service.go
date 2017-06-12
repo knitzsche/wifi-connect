@@ -22,10 +22,10 @@ import (
 	"os"
 	"time"
 
-	"github.com/CanonicalLtd/UCWifiConnect/daemon"
-	"github.com/CanonicalLtd/UCWifiConnect/netman"
-	"github.com/CanonicalLtd/UCWifiConnect/utils"
-	"github.com/CanonicalLtd/UCWifiConnect/wifiap"
+	"launchpad.net/wifi-connect/daemon"
+	"launchpad.net/wifi-connect/netman"
+	"launchpad.net/wifi-connect/utils"
+	"launchpad.net/wifi-connect/wifiap"
 )
 
 func main() {

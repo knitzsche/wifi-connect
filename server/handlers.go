@@ -25,9 +25,9 @@ import (
 	"path/filepath"
 	"text/template"
 
-	"github.com/CanonicalLtd/UCWifiConnect/netman"
-	"github.com/CanonicalLtd/UCWifiConnect/utils"
-	"github.com/CanonicalLtd/UCWifiConnect/wifiap"
+	"launchpad.net/wifi-connect/netman"
+	"launchpad.net/wifi-connect/utils"
+	"launchpad.net/wifi-connect/wifiap"
 )
 
 const (

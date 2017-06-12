@@ -21,7 +21,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/CanonicalLtd/UCWifiConnect/utils"
+	"launchpad.net/wifi-connect/utils"
 )
 
 func TestManualFlagPath(t *testing.T) {
@@ -97,6 +97,33 @@ func TestManualMode(t *testing.T) {
 func TestSetDefaults(t *testing.T) {
 	client := GetClient()
 	hfp := "/tmp/hash"
+	if _, err := os.Stat(hfp); err == nil {
+		err = os.Remove(hfp)
+		if err != nil {
+			t.Errorf("Could not remove previous file version")
+		}
+	}
+	utils.SetHashFile(hfp)
+	client.SetDefaults()
+	_, err := os.Stat(utils.HashFile)
+	if os.IsNotExist(err) {
+		t.Errorf("SetDefaults should have created %s but did not", hfp)
+	}
+	res, _ := utils.MatchingHash("wifi-connect")
+	if !res {
+		t.Errorf("SetDefaults password match did not match")
+	}
+}
+
+func TestSetDefaultsAlreadyExistsHashFile(t *testing.T) {
+	client := GetClient()
+	hfp := "/tmp/hash"
+	// create file if not exists
+	if _, err := os.Stat(utils.HashFile); os.IsNotExist(err) {
+		if _, err = os.OpenFile(hfp, os.O_CREATE, 0666); err != nil {
+			t.Errorf("Error creating %v file", hfp)
+		}
+	}
 	utils.SetHashFile(hfp)
 	client.SetDefaults()
 	_, err := os.Stat(utils.HashFile)
