@@ -34,6 +34,11 @@ const (
 	Stopping
 )
 
+const (
+	// TestingAddress listening point for testing servers
+	TestingAddress = ":8081"
+)
+
 // RunningState enum defining which server is up and running
 type RunningState int
 

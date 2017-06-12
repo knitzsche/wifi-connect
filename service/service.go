@@ -106,7 +106,10 @@ func main() {
 
 		// if wlan0 managed, set Unmanaged so that we can bring up wifi-ap
 		// properly
-		c.Unmanage()
+		if err := c.Unmanage(); err != nil {
+			fmt.Println(err)
+			continue
+		}
 
 		//wifi-ap UP?
 		wifiUp, err := cw.Enabled()
@@ -117,14 +120,20 @@ func main() {
 
 		//get ssids if wifi-ap Down
 		if !wifiUp {
-			found := c.ScanSsids(utils.SsidsFile)
-			c.Unmanage()
+			found := c.ScanAndWriteSsidsToFile(utils.SsidsFile)
+			if err := c.Unmanage(); err != nil {
+				fmt.Println(err)
+				continue
+			}
 			if !found {
 				fmt.Println("== wifi-connect: Looping.")
 				continue
 			}
 			fmt.Println("== wifi-connect: starting wifi-ap")
-			cw.Enable()
+			if err := cw.Enable(); err != nil {
+				fmt.Println(err)
+				continue
+			}
 			if client.GetPreviousState() == daemon.OPERATING {
 				client.OperationalServerDown()
 			}

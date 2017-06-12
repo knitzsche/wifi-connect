@@ -224,14 +224,14 @@ func main() {
 		pw = strings.TrimSpace(pw)
 		c.ConnectAp(ssid, pw, ap2device, ssid2ap)
 	case "management":
-		server.Address = ":8081"
+		server.Address = server.TestingAddress
 		if err := server.StartManagementServer(); err != nil {
 			fmt.Printf("Could not start management server: %v\n", err)
 			return
 		}
 		waitForCtrlC()
 	case "operational":
-		server.Address = ":8081"
+		server.Address = server.TestingAddress
 		if err := server.StartOperationalServer(); err != nil {
 			fmt.Printf("Could not start operational server: %v\n", err)
 			return
