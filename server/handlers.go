@@ -56,6 +56,9 @@ type ConnectingData struct {
 	Ssid string
 }
 
+type noData struct {
+}
+
 func execTemplate(w http.ResponseWriter, templatePath string, data Data) {
 	templateAbsPath := filepath.Join(ResourcesPath, templatePath)
 	t, err := template.ParseFiles(templateAbsPath)
@@ -215,40 +218,39 @@ func manage(c *netman.Client) {
 // RefreshHandler handles ssids refreshment
 func RefreshHandler(w http.ResponseWriter, r *http.Request) {
 
-	execTemplate(w, refreshingTemplatePath, nil)
+	// show intermediate page with refreshing message and process AP renewal in a go routine
+	execTemplate(w, refreshingTemplatePath, noData{})
 
-	c := netman.DefaultClient()
-	cw := wifiap.DefaultClient()
+	go func() {
+		c := netman.DefaultClient()
+		cw := wifiap.DefaultClient()
 
-	unmanage(c)
+		unmanage(c)
 
-	apUp, err := cw.Enabled()
-	if err != nil {
-		fmt.Println(Sprintf("An error happened while requesting current AP status: %v\n", err))
-		return
-	}
-
-	if apUp {
-		err := cw.Disable()
+		apUp, err := cw.Enabled()
 		if err != nil {
-			fmt.Println(Sprintf("An error happened while bringing AP down: %v\n", err))
+			fmt.Println(Sprintf("An error happened while requesting current AP status: %v\n", err))
 			return
 		}
-	}
 
-	for found := scanSsids(utils.SsidsFile, c); !found; found = scanSsids(utils.SsidsFile, c) {
-		time.Sleep(5 * time.Second)
-	}
+		if apUp {
+			err := cw.Disable()
+			if err != nil {
+				fmt.Println(Sprintf("An error happened while bringing AP down: %v\n", err))
+				return
+			}
+		}
 
-	unmanage(c)
+		for found := scanSsids(utils.SsidsFile, c); !found; found = scanSsids(utils.SsidsFile, c) {
+			time.Sleep(5 * time.Second)
+		}
 
-	err = cw.Enable()
-	if err != nil {
-		fmt.Println(Sprintf("An error happened while bringing AP up: %v\n", err))
-		return
-	}
+		unmanage(c)
 
-	// Try to update UI, though it won't probably be possible as far as it is needed to bring down/up AP
-	// in a step before.
-	//ManagementHandler(w, r)
+		err = cw.Enable()
+		if err != nil {
+			fmt.Println(Sprintf("An error happened while bringing AP up: %v\n", err))
+			return
+		}
+	}()
 }

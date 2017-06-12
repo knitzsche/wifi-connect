@@ -7,6 +7,8 @@ import (
 
 func TestBasicServerTransitionStates(t *testing.T) {
 
+	Address = ":14444"
+
 	os.Setenv("SNAP_COMMON", os.TempDir())
 
 	if Current != None || State != Stopped {
@@ -50,6 +52,9 @@ func TestBasicServerTransitionStates(t *testing.T) {
 }
 
 func TestEdgeServerTransitionStates(t *testing.T) {
+
+	Address = ":14444"
+
 	os.Setenv("SNAP_COMMON", os.TempDir())
 
 	if Current != None {
