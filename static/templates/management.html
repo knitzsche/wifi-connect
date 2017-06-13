@@ -25,9 +25,9 @@
             </div>
 
            <div class="row no-border" id="grid">
+               <h2>Select WIFI to connect to:</h2>
                <fieldset>
-                <h2>Select WIFI to connect to</h2>
-              
+                <br/>
                 <table>
                 {{range $i, $ssid := .Ssids}}
                 <tr>
@@ -64,18 +64,14 @@
                     </th>
                 </tr>
                 {{end}}
-
                 </table>
-           
-               
-          
+
                 <div class="box" style="background-color: #eee">
                     <p>Warning: This takes down the device AP and disconnects you. Please reconnect in a minute or two</p>
                     <input type="button" value="Refresh WIFI Access Points" class="button--primary" onclick="do_refresh()"/>
                 </div>
 
                 </fieldset>
-                    
             </div>
 
             <div class="row no-border" id="refreshingAlert">
