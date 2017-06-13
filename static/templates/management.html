@@ -68,16 +68,16 @@
 
                 <div class="box" style="background-color: #eee">
                     <p>Warning: This takes down the device AP and disconnects you. Please reconnect in a minute or two</p>
-                    <input type="button" value="Refresh WIFI Access Points" class="button--primary" onclick="do_refresh()"/>
+                    <input type="button" value="Refresh Wi-Fi Access Points" class="button--primary" onclick="do_refresh()"/>
                 </div>
 
                 </fieldset>
             </div>
 
             <div class="row no-border" id="refreshingAlert">
-                <h3>Refreshing WIFI access points...</h3>
+                <h3>Refreshing Wi-Fi access points...</h3>
                 <div class="twelve-col box" style="background-color: #eee">
-                    <p>You have been disconnected. The device is refreshing WIFI access points. Please rejoin the device access point and reload this page in a minute or two.</p>
+                    <p>You have been disconnected. The device is refreshing Wi-Fi access points. Please rejoin the device access point and reload this page in a minute or two.</p>
                 </div>
             </div>
 
@@ -165,11 +165,9 @@ function do_connect(i) {
 }
 
 function do_refresh() {
+    showRefreshingAlert()
     $.ajax({
-        url: '/'
-    }).done(function () {
-        console.log("refresh requested")
-        showRefreshingAlert()
+        url: '/refresh'
     })
 } 
 </script>
