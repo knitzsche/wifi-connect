@@ -25,11 +25,10 @@
             </div>
 
            <div class="row no-border" id="grid">
+               <fieldset>
                 <h2>Select WIFI to connect to</h2>
-                <fieldset>
-                <div class="twelve-col">
+              
                 <table>
-                
                 {{range $i, $ssid := .Ssids}}
                 <tr>
                     <th scope="row">
@@ -65,15 +64,17 @@
                     </th>
                 </tr>
                 {{end}}
-                
+
                 </table>
-                </div>
-                </fieldset>
+           
+               
           
                 <div class="box" style="background-color: #eee">
                     <p>Warning: This takes down the device AP and disconnects you. Please reconnect in a minute or two</p>
                     <input type="button" value="Refresh WIFI Access Points" class="button--primary" onclick="do_refresh()"/>
                 </div>
+
+                </fieldset>
                     
             </div>
 
@@ -169,7 +170,7 @@ function do_connect(i) {
 
 function do_refresh() {
     $.ajax({
-        url: '/refresh'
+        url: '/'
     }).done(function () {
         console.log("refresh requested")
         showRefreshingAlert()
