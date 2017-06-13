@@ -31,7 +31,13 @@ import (
 func main() {
 
 	client := daemon.GetClient()
-	client.SetDefaults()
+	preconfigured, errP := client.SetDefaults()
+	if preconfigured {
+		fmt.Println("== wifi-connect/daemon: preconfiguration used")
+	}
+	if errP != nil {
+		fmt.Println("== wifi-connect/daemon: preconfiguration error:", errP)
+	}
 	first := true
 	client.SetWaitFlagPath(os.Getenv("SNAP_COMMON") + "/startingApConnect")
 	client.SetManualFlagPath(os.Getenv("SNAP_COMMON") + "/manualMode")

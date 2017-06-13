@@ -18,9 +18,11 @@
 package daemon
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/CanonicalLtd/UCWifiConnect/avahi"
@@ -42,6 +44,17 @@ var manualFlagPath string
 var waitFlagPath string
 var previousState = STARTING
 var state = STARTING
+
+// ConfigFile is the path to the file that stores the hash of the portals password
+var ConfigFile = filepath.Join(os.Getenv("SNAP_COMMON"), "config.json")
+
+// Config is the struct representing a configuration
+type Config struct {
+	Ssid                 string `json:"wifi-ap.ssid"`
+	Passphrase           string `json:"wifi-ap.passphrase"`
+	Password             string `json:"portal.password"`
+	UseOperationalPortal bool   `json:"portal.operational"`
+}
 
 // Client is the base type for both testing and runtime
 type Client struct {
@@ -231,11 +244,45 @@ func (c *Client) OperationalServerDown() {
 	}
 }
 
-// SetDefaults sets defaults if not yet set. Currently the hash
-// for the portals password is set.
-// TODO: set default password based on MAC addr or Serial number
-func (c *Client) SetDefaults() {
-	if _, err := os.Stat(utils.HashFile); os.IsNotExist(err) {
-		utils.HashIt("wifi-connect")
+// SetDefaults checks if there is a configuration file, and if so it applies the configuration,
+// returning true, nil on success, true, error on failure. If there is no configuration file,
+// false, error is returned
+func (c *Client) SetDefaults() (bool, error) {
+	_, err := os.Open(ConfigFile)
+	if err != nil {
+		return false, err
 	}
+	content, errR := ioutil.ReadFile(ConfigFile)
+	if errR != nil {
+		return true, err
+	}
+	config := &Config{}
+	errJ := json.Unmarshal(content, config)
+	if errJ != nil {
+		return true, errJ
+	}
+	fmt.Println("== wifi-connect/SetDefaults running")
+	if len(config.Password) > 0 {
+		fmt.Println("== wifi-connect/SetDefaults portal password being set")
+		utils.HashIt(config.Password)
+	}
+	if len(config.Ssid) > 0 {
+		fmt.Println("== wifi-connect/SetDefaults wifi-ap SSID being set to", config.Ssid)
+		c := wifiap.DefaultClient()
+		err := c.SetSsid(config.Ssid)
+		if err != nil {
+			return true, err
+		}
+	}
+	if len(config.Passphrase) > 0 {
+		fmt.Println("== wifi-connect/SetDefaults wifi-ap passphrase being set")
+		c := wifiap.DefaultClient()
+		err := c.SetPassphrase(config.Passphrase)
+		if err != nil {
+			return true, err
+		}
+	}
+
+	fmt.Println("== wifi-connect/SetDefaults done")
+	return true, nil
 }
