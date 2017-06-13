@@ -35,7 +35,6 @@ const (
 	managementTemplatePath  = "/templates/management.html"
 	connectingTemplatePath  = "/templates/connecting.html"
 	operationalTemplatePath = "/templates/operational.html"
-	refreshingTemplatePath  = "/templates/refreshing.html"
 )
 
 // ResourcesPath absolute path to web static resources
@@ -177,14 +176,17 @@ func DisconnectHandler(w http.ResponseWriter, r *http.Request) {
 // RefreshHandler handles ssids refreshment
 func RefreshHandler(w http.ResponseWriter, r *http.Request) {
 
-	// show intermediate page with refreshing message and process AP renewal in a go routine
-	execTemplate(w, refreshingTemplatePath, noData{})
+	// show same page. After refresh operation, management page should show a refresh alert
+	ManagementHandler(w, r)
 
 	go func() {
 		c := netman.DefaultClient()
 		cw := wifiap.DefaultClient()
 
-		c.Unmanage()
+		if err := c.Unmanage(); err != nil {
+			fmt.Println(err)
+			return
+		}
 
 		apUp, err := cw.Enabled()
 		if err != nil {
@@ -204,12 +206,17 @@ func RefreshHandler(w http.ResponseWriter, r *http.Request) {
 			time.Sleep(5 * time.Second)
 		}
 
-		c.Unmanage()
+		if err := c.Unmanage(); err != nil {
+			fmt.Println(err)
+			return
+		}
 
 		err = cw.Enable()
 		if err != nil {
 			fmt.Println(Sprintf("An error happened while bringing AP up: %v\n", err))
 			return
 		}
+
+		fmt.Println("== wifi-connect/RefreshHandler: starting wifi-ap")
 	}()
 }
