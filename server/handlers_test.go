@@ -62,6 +62,25 @@ func TestConnectHandler(t *testing.T) {
 	}
 }
 
+func TestRefreshHandler(t *testing.T) {
+
+	ResourcesPath = "../static"
+	SsidsFile := "../static/tests/ssids"
+	utils.SetSsidsFile(SsidsFile)
+
+	w := httptest.NewRecorder()
+	r, _ := http.NewRequest("GET", "/refresh", nil)
+	http.HandlerFunc(RefreshHandler).ServeHTTP(w, r)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("Expected status %d, got: %d", http.StatusOK, w.Code)
+	}
+
+	if !strings.Contains(w.Header().Get("Content-Type"), "text/html") {
+		t.Error("Response content type is not expected text/html")
+	}
+}
+
 func TestInvalidTemplateHandler(t *testing.T) {
 
 	ResourcesPath = "/invalidpath"
