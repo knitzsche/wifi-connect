@@ -437,7 +437,6 @@ func (c *Client) scanSsids(writer io.Writer) bool {
 		}
 		out = out[:len(out)-1]
 		_, err := writer.Write([]byte(out))
-		//err := ioutil.WriteFile(path, []byte(out), 0644)
 		if err != nil {
 			fmt.Printf("== wifi-connect: Error writing SSID(s): %v\n ", err)
 		} else {
