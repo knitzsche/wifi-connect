@@ -115,7 +115,7 @@ Note the DHCP range:
 The portal password must be entered to access wifi-connect web pages.
 
 ```bash
-sudo  wifi-connect set-hash PASSWORD
+sudo  wifi-connect set-portal-password PASSWORD
 ```
 
 ## Join the device AP
