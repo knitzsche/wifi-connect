@@ -74,9 +74,6 @@ install_snap_under_test() {
 		# Install prebuilt snap
 		snap install --dangerous ${PROJECT_PATH}/${SNAP_NAME}_*_${SNAP_ARCH}.snap
 
-		# Create content sharing directory if needed
-		[ -e /var/snap/wifi-connect/common/sockets ] || mkdir -p /var/snap/wifi-connect/common/sockets
-
 		connect_interfaces
 
 		# set NetworkManager to control all networking
