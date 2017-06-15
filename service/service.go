@@ -19,6 +19,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"time"
 
@@ -29,6 +30,9 @@ import (
 )
 
 func main() {
+
+	log.SetFlags(log.Ldate | log.Ltime | log.LUTC | log.Lshortfile)
+	log.SetPrefix("== wifi-connect: ")
 
 	client := daemon.GetClient()
 	client.SetDefaults()
