@@ -29,9 +29,9 @@ func managementHandler() *mux.Router {
 
 	// Pages routes
 	router.HandleFunc("/", ManagementHandler).Methods("GET")
-	router.HandleFunc("/connect", ConnectHandler).Methods("POST")
+	router.Handle("/connect", Middleware(http.HandlerFunc(ConnectHandler))).Methods("POST")
 	router.HandleFunc("/hashit", HashItHandler).Methods("POST")
-	router.HandleFunc("/refresh", RefreshHandler).Methods("GET")
+	router.Handle("/refresh", Middleware(http.HandlerFunc(RefreshHandler))).Methods("GET")
 
 	// Resources path
 	fs := http.StripPrefix("/static/", http.FileServer(http.Dir(ResourcesPath)))
@@ -45,7 +45,7 @@ func operationalHandler() *mux.Router {
 	router := mux.NewRouter()
 
 	router.HandleFunc("/", OperationalHandler).Methods("GET")
-	router.HandleFunc("/disconnect", DisconnectHandler).Methods("GET")
+	router.Handle("/disconnect", Middleware(http.HandlerFunc(DisconnectHandler))).Methods("GET")
 	router.HandleFunc("/hashit", HashItHandler).Methods("POST")
 
 	// Resources path
