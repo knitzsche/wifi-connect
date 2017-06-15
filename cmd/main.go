@@ -20,6 +20,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"strings"
@@ -85,6 +86,9 @@ func checkSudo() bool {
 }
 
 func main() {
+
+	log.SetFlags(log.Ldate | log.Ltime | log.LUTC | log.Lshortfile)
+	log.SetPrefix("== wifi-connect: ")
 
 	if len(os.Args) < 2 {
 		fmt.Println("== wifi-connect/cmd Error: no command arguments provided")
