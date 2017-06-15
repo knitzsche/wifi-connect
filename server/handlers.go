@@ -121,11 +121,7 @@ func ConnectHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		//connect
-		changedIface := netmanClient.SetIfaceManaged("wlan0", true, netmanClient.GetWifiDevices(netmanClient.GetDevices()))
-		if changedIface == "" {
-			log.Print(Sprintf("Error managing interface"))
-			return
-		}
+		netmanClient.SetIfaceManaged("wlan0", true, netmanClient.GetWifiDevices(netmanClient.GetDevices()))
 		_, ap2device, ssid2ap := netmanClient.Ssids()
 
 		err = netmanClient.ConnectAp(ssid, pwd, ap2device, ssid2ap)
