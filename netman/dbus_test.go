@@ -240,7 +240,7 @@ func TestConnectedWifi(t *testing.T) {
 	}
 }
 
-func TestiDiscconnectWifi(t *testing.T) {
+func TestDiscconnectWifi(t *testing.T) {
 	client := NewClient(&mockObj{})
 	res := client.DisconnectWifi([]string{})
 	if res != 0 {
