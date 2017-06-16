@@ -87,11 +87,11 @@ func checkSudo() bool {
 
 func main() {
 
-	log.SetFlags(log.Ldate | log.Ltime | log.LUTC | log.Lshortfile)
+	log.SetFlags(log.Llongfile)
 	log.SetPrefix("== wifi-connect: ")
 
 	if len(os.Args) < 2 {
-		fmt.Println("== wifi-connect/cmd Error: no command arguments provided")
+		fmt.Println("Error: no command arguments provided")
 		return
 	}
 	args := os.Args[1:]

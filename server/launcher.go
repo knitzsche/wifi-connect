@@ -106,7 +106,7 @@ func listenAndServe(addr string, handler http.Handler) error {
 		}
 
 		if retries == 0 {
-			log.Print(Sprintf("Server could not be started"))
+			log.Print("Server could not be started")
 			return
 		}
 
@@ -118,7 +118,7 @@ func listenAndServe(addr string, handler http.Handler) error {
 		if listener != nil {
 			err := srv.Serve(tcpKeepAliveListener{listener.(*net.TCPListener)})
 			if err != nil {
-				log.Printf(Sprintf("HTTP Server closing - %v", err))
+				log.Printf("HTTP Server closing - %v", err)
 			}
 			// notify server real stop
 			done <- true

@@ -4,47 +4,47 @@ import (
 	"testing"
 )
 
-func TestErrorFormat(t *testing.T) {
+func TestPkgErrorFormat(t *testing.T) {
 
 	msg := "Whatever message"
-	e := Errorf(msg)
-	expected := FmtPrefix + ": " + msg
+	e := PkgErrorf("package", msg)
+	expected := "package: " + msg
 
 	if e.Error() != expected {
 		t.Errorf("Error is not well formatted, expected %v but got %v", expected, e.Error())
 	}
 }
-func TestErrorfFormat(t *testing.T) {
+func TestPkgErrorfFormat(t *testing.T) {
 
 	format := "Whatever %v"
 	detail := "message"
-	e := Errorf(format, detail)
+	e := PkgErrorf("package", format, detail)
 
-	expected := FmtPrefix + ": Whatever message"
+	expected := "package: Whatever message"
 
 	if e.Error() != expected {
 		t.Errorf("Error is not well formatted, expected %s but got %s", expected, e.Error())
 	}
 }
 
-func TestSprintFormat(t *testing.T) {
+func TestPkgSprintFormat(t *testing.T) {
 
 	msg := "Whatever message"
-	e := Sprintf(msg)
-	expected := FmtPrefix + ": " + msg
+	e := PkgSprintf("package", msg)
+	expected := "package: " + msg
 
 	if e != expected {
 		t.Errorf("String is not well formatted, expected %s but got %s", expected, e)
 	}
 }
 
-func TestSprintfFormat(t *testing.T) {
+func TestPkgSprintfFormat(t *testing.T) {
 
 	format := "Whatever %v"
 	detail := "message"
-	e := Sprintf(format, detail)
+	e := PkgSprintf("package", format, detail)
 
-	expected := FmtPrefix + ": Whatever message"
+	expected := "package: Whatever message"
 
 	if e != expected {
 		t.Errorf("String is not well formatted, expected %s but got %s", expected, e)

@@ -19,8 +19,7 @@ package netman
 
 import (
 	"errors"
-	"fmt"
-	"os"
+	"log"
 	"strings"
 	"time"
 
@@ -90,7 +89,7 @@ func (c *Client) GetDevices() []string {
 	var devices []string
 	err := c.dbusClient.BusObj.Call("org.freedesktop.NetworkManager.GetAllDevices", 0).Store(&devices)
 	if err != nil {
-		fmt.Println("== wifi-connect: Error getting devices:", err)
+		log.Printf("Error getting devices: %v", err)
 	}
 	return devices
 }
@@ -104,7 +103,7 @@ func (c *Client) GetWifiDevices(devices []string) []string {
 		setObject(c, "org.freedesktop.NetworkManager", objPath)
 		deviceType, err2 := c.dbusClient.BusObj.GetProperty("org.freedesktop.NetworkManager.Device.DeviceType")
 		if err2 != nil {
-			fmt.Println("== wifi-connect: Error getting wifi devices:", err2)
+			log.Printf("Error getting wifi devices: %v", err2)
 			continue
 		}
 		var wifiType uint32
@@ -130,7 +129,7 @@ func (c *Client) GetAccessPoints(devices []string, ap2device map[string]string) 
 		setObject(c, "org.freedesktop.NetworkManager", objPath)
 		err := c.dbusClient.BusObj.Call("org.freedesktop.NetworkManager.Device.Wireless.GetAllAccessPoints", 0).Store(&aps)
 		if err != nil {
-			fmt.Println("== wifi-connect: Error getting accesspoints:", err)
+			log.Printf("Error getting accesspoints: %v", err)
 			continue
 		}
 		if len(aps) == 0 {
@@ -159,7 +158,7 @@ func (c *Client) getSsids(APs []string, ssid2ap map[string]string) []SSID {
 		setObject(c, "org.freedesktop.NetworkManager", objPath)
 		ssid, err := c.dbusClient.BusObj.GetProperty("org.freedesktop.NetworkManager.AccessPoint.Ssid")
 		if err != nil {
-			fmt.Println("== wifi-connect: Error getting accesspoint's ssids:", err)
+			log.Printf("Error getting accesspoint's ssids: %v", err)
 			continue
 		}
 		type B []byte
@@ -217,7 +216,7 @@ func (c *Client) ConnectAp(ssid string, p string, ap2device map[string]string, s
 func getSystemBus() *dbus.Conn {
 	conn, err := dbus.SystemBus()
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "== wifi-connect: Error: Failed to connect to system bus:", err)
+		log.Printf("Error: Failed to connect to system bus: %v", err)
 		panic(1)
 	}
 	return conn
@@ -242,12 +241,12 @@ func (c *Client) Connected(devices []string) bool {
 		setObject(c, "org.freedesktop.NetworkManager", objPath)
 		dType, err := c.dbusClient.BusObj.GetProperty("org.freedesktop.NetworkManager.Device.DeviceType")
 		if err != nil {
-			fmt.Println("== wifi-connect: Error getting device type:", err)
+			log.Printf("Error getting device type: %v", err)
 			continue
 		}
 		state, err2 := c.dbusClient.BusObj.GetProperty("org.freedesktop.NetworkManager.Device.State")
 		if err2 != nil {
-			fmt.Println("== wifi-connect: Error getting device state:", err2)
+			log.Printf("Error getting device state: %v", err2)
 			continue
 		}
 		// only handle eth and wifi device type
@@ -269,7 +268,7 @@ func (c *Client) ConnectedWifi(wifiDevices []string) bool {
 		setObject(c, "org.freedesktop.NetworkManager", objPath)
 		state, err := c.dbusClient.BusObj.GetProperty("org.freedesktop.NetworkManager.Device.State")
 		if err != nil {
-			fmt.Println("== wifi-connect: Error getting device state:", err)
+			log.Printf("Error getting device state: %v", err)
 			continue
 		}
 		if dbus.Variant.Value(state) == uint32(100) {
@@ -300,7 +299,7 @@ func (c *Client) SetIfaceManaged(iface string, state bool, devices []string) str
 		setObject(c, "org.freedesktop.NetworkManager", objPath)
 		intface, err2 := c.dbusClient.BusObj.GetProperty("org.freedesktop.NetworkManager.Device.Interface")
 		if err2 != nil {
-			fmt.Printf("== wifi-connect: Error in SetIfaceManaged() geting interface: %v\n", err2)
+			log.Printf("Error in SetIfaceManaged() geting interface: %v", err2)
 			return ""
 		}
 		if iface != intface.Value().(string) {
@@ -308,7 +307,7 @@ func (c *Client) SetIfaceManaged(iface string, state bool, devices []string) str
 		}
 		managed, err := c.dbusClient.BusObj.GetProperty("org.freedesktop.NetworkManager.Device.Managed")
 		if err != nil {
-			fmt.Printf("== wifi-connect: Error in SetIfaceManaged() fetching device managed: %v\n", err)
+			log.Printf("Error in SetIfaceManaged() fetching device managed: %v", err)
 			return ""
 		}
 		switch state {
@@ -358,12 +357,12 @@ func (c *Client) WifisManaged(wifiDevices []string) (map[string]string, error) {
 		setObject(c, "org.freedesktop.NetworkManager", objPath)
 		managed, err := c.dbusClient.BusObj.GetProperty("org.freedesktop.NetworkManager.Device.Managed")
 		if err != nil {
-			fmt.Printf("== wifi-connect: Error in WifisManaged() getting device managed : %v\n", err)
+			log.Printf("Error in WifisManaged() getting device managed: %v", err)
 			return ifaces, err
 		}
 		iface, err2 := c.dbusClient.BusObj.GetProperty("org.freedesktop.NetworkManager.Device.Interface")
 		if err2 != nil {
-			fmt.Printf("== wifi-connect: Error in WifisManaged() getting device interface: %v\n", err)
+			log.Printf("Error in WifisManaged() getting device interface: %v", err)
 			return ifaces, err2
 		}
 		if managed.Value().(bool) == true {

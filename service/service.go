@@ -18,7 +18,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"time"
@@ -31,7 +30,7 @@ import (
 
 func main() {
 
-	log.SetFlags(log.Ldate | log.Ltime | log.LUTC | log.Lshortfile)
+	log.SetFlags(log.Llongfile)
 	log.SetPrefix("== wifi-connect: ")
 
 	client := daemon.GetClient()
@@ -48,7 +47,7 @@ func main() {
 
 	for {
 		if first {
-			fmt.Println("== wifi-connect: daemon STARTING")
+			log.Print("daemon STARTING")
 			client.SetPreviousState(daemon.STARTING)
 			client.SetState(daemon.STARTING)
 			first = false
@@ -94,7 +93,7 @@ func main() {
 		if c.ConnectedWifi(c.GetWifiDevices(c.GetDevices())) {
 			client.SetState(daemon.OPERATING)
 			if client.GetPreviousState() != daemon.OPERATING {
-				fmt.Println("== wifi-connect: entering OPERATIONAL mode")
+				log.Print("entering OPERATIONAL mode")
 			}
 			if client.GetPreviousState() == daemon.MANAGING {
 				client.ManagementServerDown()
@@ -105,7 +104,7 @@ func main() {
 
 		client.SetState(daemon.MANAGING)
 		if client.GetPreviousState() != daemon.MANAGING {
-			fmt.Println("== wifi-connect: entering MANAGEMENT mode")
+			log.Print("entering MANAGEMENT mode")
 		}
 
 		// if wlan0 managed, set Unmanaged so that we can bring up wifi-ap
@@ -115,7 +114,7 @@ func main() {
 		//wifi-ap UP?
 		wifiUp, err := cw.Enabled()
 		if err != nil {
-			fmt.Println("== wifi-connect: Error checking wifi-ap.Enabled():", err)
+			log.Printf("Error when checking wifi-ap.Enabled(): %v", err)
 			continue // try again since no better course of action
 		}
 
@@ -124,10 +123,10 @@ func main() {
 			found := client.ScanSsids(utils.SsidsFile, c)
 			client.Unmanage(c)
 			if !found {
-				fmt.Println("== wifi-connect: Looping.")
+				log.Print("No SSIDs found. Continuing to scan for SSIDS...")
 				continue
 			}
-			fmt.Println("== wifi-connect: starting wifi-ap")
+			log.Printf("Starting wifi-ap")
 			cw.Enable()
 			if client.GetPreviousState() == daemon.OPERATING {
 				client.OperationalServerDown()

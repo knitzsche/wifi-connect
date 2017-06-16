@@ -18,8 +18,8 @@
 package daemon
 
 import (
-	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 	"strings"
 
@@ -112,13 +112,13 @@ func (c *Client) ScanSsids(path string, nc *netman.Client) bool {
 		out = out[:len(out)-1]
 		err := ioutil.WriteFile(path, []byte(out), 0644)
 		if err != nil {
-			fmt.Println("== wifi-connect: Error writing SSID(s) to ", path)
+			log.Printf("Error writing SSID(s) to %s", path)
 		} else {
-			fmt.Println("== wifi-connect: SSID(s) obtained")
+			log.Print("SSID(s) obtained")
 			return true
 		}
 	}
-	fmt.Println("== wifi-connect: No SSID found")
+	log.Print("No SSID found")
 	return false
 }
 
@@ -154,13 +154,13 @@ func (c *Client) ManualMode() bool {
 	if _, err := os.Stat(manualFlagPath); os.IsNotExist(err) {
 		if state == MANUAL {
 			c.SetState(STARTING)
-			fmt.Println("== wifi-connect: entering STARTING mode")
+			log.Print("entering STARTING mode")
 		}
 		return false
 	}
 	if state != MANUAL {
 		c.SetState(MANUAL)
-		fmt.Println("== wifi-connect: entering MANUAL mode")
+		log.Print("entering MANUAL mode")
 	}
 	return true
 }
@@ -176,7 +176,7 @@ func (c *Client) IsApUpWithoutSSIDs(cw *wifiap.Client) bool {
 	}
 	ssids, _ := utils.ReadSsidsFile()
 	if len(ssids) < 1 {
-		fmt.Println("== wifi-connect: wifi-ap is UP but has no SSIDS")
+		log.Print("wifi-ap is UP but has no SSIDS")
 		return true // ap is up with no ssids
 	}
 	return false
@@ -188,7 +188,7 @@ func (c *Client) ManagementServerUp() {
 	if server.Current != server.Management && server.State == server.Stopped {
 		err = server.StartManagementServer()
 		if err != nil {
-			fmt.Println("== wifi-connect: Error start Mamagement portal:", err)
+			log.Printf("Error start Mamagement portal: %v", err)
 		}
 		// init mDNS
 		avahi.InitMDNS()
@@ -201,7 +201,7 @@ func (c *Client) ManagementServerDown() {
 	if server.Current == server.Management && (server.State == server.Running || server.State == server.Starting) {
 		err = server.ShutdownManagementServer()
 		if err != nil {
-			fmt.Println("== wifi-connect: Error stopping the Management portal:", err)
+			log.Printf("Error stopping the Management portal: %v", err)
 		}
 		//remove flag fie so daemon resumes normal control
 		utils.RemoveFlagFile(os.Getenv("SNAP_COMMON") + "/startingApConnect")
@@ -214,7 +214,7 @@ func (c *Client) OperationalServerUp() {
 	if server.Current != server.Operational && server.State == server.Stopped {
 		err = server.StartOperationalServer()
 		if err != nil {
-			fmt.Println("== wifi-connect: Error starting the Operational portal:", err)
+			log.Printf("Error starting the Operational portal: %v", err)
 		}
 		// init mDNS
 		avahi.InitMDNS()
@@ -226,7 +226,7 @@ func (c *Client) OperationalServerDown() {
 	if server.Current == server.Operational && (server.State == server.Running || server.State == server.Starting) {
 		err = server.ShutdownOperationalServer()
 		if err != nil {
-			fmt.Println("== wifi-connect: Error stopping Operational portal:", err)
+			log.Printf("Error stopping Operational portal: %v", err)
 		}
 	}
 }

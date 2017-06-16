@@ -19,7 +19,7 @@ package server
 
 import (
 	"encoding/json"
-	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -56,14 +56,14 @@ func execTemplate(w http.ResponseWriter, templatePath string, data Data) {
 	templateAbsPath := filepath.Join(ResourcesPath, templatePath)
 	t, err := template.ParseFiles(templateAbsPath)
 	if err != nil {
-		fmt.Printf("== wifi-connect/handler: Error loading the template at %v : %v\n", templatePath, err)
+		log.Printf("Error loading the template at %v: %v", templatePath, err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	err = t.Execute(w, data)
 	if err != nil {
-		fmt.Printf("== wifi-connect/handler: Error executing the template at %v : %v\n", templatePath, err)
+		log.Printf("Error executing the template at %v: %v", templatePath, err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -74,7 +74,7 @@ func ManagementHandler(w http.ResponseWriter, r *http.Request) {
 	// daemon stores current available ssids in a file
 	ssids, err := utils.ReadSsidsFile()
 	if err != nil {
-		fmt.Printf("== wifi-connect/handler: Error reading SSIDs file: %v\n", err)
+		log.Printf("Error reading SSIDs file: %v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -92,7 +92,7 @@ func ConnectHandler(w http.ResponseWriter, r *http.Request) {
 
 	ssids := r.Form["ssid"]
 	if len(ssids) == 0 {
-		fmt.Println("== wifi-connect/handler: SSID not available")
+		log.Print("SSID not available")
 		return
 	}
 	ssid := ssids[0]
@@ -106,7 +106,7 @@ func ConnectHandler(w http.ResponseWriter, r *http.Request) {
 		pwd = pwds[0]
 	}
 
-	fmt.Printf("== wifi-connect/handler: Connecting to %v\n", ssid)
+	log.Printf("Connecting to %v", ssid)
 
 	cw := wifiap.DefaultClient()
 	cw.Disable()
@@ -120,7 +120,7 @@ func ConnectHandler(w http.ResponseWriter, r *http.Request) {
 
 	//TODO signal user in portal on failure to connect
 	if err != nil {
-		fmt.Printf("== wifi-connect/handler: Failed connecting to %v.\n", ssid)
+		log.Printf("Failed connecting to %v.", ssid)
 	}
 
 	//remove flag file so that daemon starts checking state
@@ -149,7 +149,7 @@ func HashItHandler(w http.ResponseWriter, r *http.Request) {
 	hashMe := r.Form["Hash"]
 	hashed, errH := utils.MatchingHash(hashMe[0])
 	if errH != nil {
-		fmt.Println("== wifi-connect/HashitHandler: error hashing:", errH)
+		log.Printf("HashItHandler: error hashing: %v", errH)
 		return
 	}
 	res := &hashResponse{}
@@ -157,7 +157,7 @@ func HashItHandler(w http.ResponseWriter, r *http.Request) {
 	res.Err = "no error"
 	b, err := json.Marshal(res)
 	if err != nil {
-		fmt.Println("== wifi-connect/HashItHandler: error mashaling json")
+		log.Printf("HashItHandler: error marshaling json")
 		return
 	}
 	w.Write(b)
