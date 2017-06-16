@@ -40,6 +40,7 @@ parts:
   hooks:
     plugin: go
     source: hooks
+    go-importpath: github.com/CanonicalLtd/UCWifiConnect
     install: |
       mkdir -p $SNAPCRAFT_PART_INSTALL/snap/hooks
       mv $SNAPCRAFT_PART_INSTALL/bin/hooks $SNAPCRAFT_PART_INSTALL/snap/hooks/configure

@@ -45,15 +45,17 @@ var waitFlagPath string
 var previousState = STARTING
 var state = STARTING
 
-// ConfigFile is the path to the file that stores the hash of the portals password
-var ConfigFile = filepath.Join(os.Getenv("SNAP_COMMON"), "config.json")
+// PreConfigFile is the path to the file that stores the hash of the portals password
+var PreConfigFile = filepath.Join(os.Getenv("SNAP_COMMON"), "pre-config.json")
 
-// Config is the struct representing a configuration
-type Config struct {
-	Ssid                 string `json:"wifi-ap.ssid"`
-	Passphrase           string `json:"wifi-ap.passphrase"`
-	Password             string `json:"portal.password"`
-	UseOperationalPortal bool   `json:"portal.operational"`
+// PreConfig is the struct representing a configuration
+type PreConfig struct {
+	Passphrase         string `json:"wifi-ap.passphrase,omitempty"`
+	Ssid               string `json:"wifi-ap.ssid,omitempty"`
+	Interface          string `json:"wifi-ap.interface,omitempty"`
+	Password           string `json:"portal.password,omitempty"`
+	Operational        bool   `json:"portal.operational,omitempty"` //whether to show the operational portal
+	ResetCredsRequired bool   `json:"portal.reset-creds,omitempty"` //whether user must reset passphrase and password on first use of mgmt portal
 }
 
 // Client is the base type for both testing and runtime
@@ -248,7 +250,8 @@ func (c *Client) OperationalServerDown() {
 // returning true, nil on success, true, error on failure. If there is no configuration file,
 // false, error is returned
 func (c *Client) SetDefaults() (bool, error) {
-	_, err := os.Open(ConfigFile)
+	fmt.Println("== wifi-connect/SetDefaults running")
+	_, err := os.Open(PreConfigFile)
 	if err != nil {
 		return false, err
 	}
@@ -256,23 +259,10 @@ func (c *Client) SetDefaults() (bool, error) {
 	if errR != nil {
 		return true, err
 	}
-	config := &Config{}
+	config := &PreConfig{}
 	errJ := json.Unmarshal(content, config)
 	if errJ != nil {
 		return true, errJ
-	}
-	fmt.Println("== wifi-connect/SetDefaults running")
-	if len(config.Password) > 0 {
-		fmt.Println("== wifi-connect/SetDefaults portal password being set")
-		utils.HashIt(config.Password)
-	}
-	if len(config.Ssid) > 0 {
-		fmt.Println("== wifi-connect/SetDefaults wifi-ap SSID being set to", config.Ssid)
-		c := wifiap.DefaultClient()
-		err := c.SetSsid(config.Ssid)
-		if err != nil {
-			return true, err
-		}
 	}
 	if len(config.Passphrase) > 0 {
 		fmt.Println("== wifi-connect/SetDefaults wifi-ap passphrase being set")
@@ -281,6 +271,31 @@ func (c *Client) SetDefaults() (bool, error) {
 		if err != nil {
 			return true, err
 		}
+	}
+
+	if len(config.Ssid) > 0 {
+		fmt.Println("== wifi-connect/SetDefaults wifi-ap SSID being set to", config.Ssid)
+		c := wifiap.DefaultClient()
+		err := c.SetSsid(config.Ssid)
+		if err != nil {
+			return true, err
+		}
+	}
+	if len(config.Interface) > 0 {
+		fmt.Println("== wifi-connect/SetDefaults wifi-ap interface being set to", config.Interface)
+		//TODO implementation
+	}
+	if len(config.Password) > 0 {
+		fmt.Println("== wifi-connect/SetDefaults portal password being set")
+		utils.HashIt(config.Password)
+	}
+	if !config.Opertional > 0 {
+		fmt.Println("== wifi-connect/SetDefaults: don't show opertionational portal")
+		// TODO
+	}
+	if !config.ResetCredsRequired > 0 {
+		fmt.Println("== wifi-connect/SetDefaults: don't require creds are reset")
+		// TODO
 	}
 
 	fmt.Println("== wifi-connect/SetDefaults done")
