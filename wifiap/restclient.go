@@ -30,7 +30,7 @@ const (
 	configurationURI = "/configuration"
 )
 
-var socketPath = os.Getenv("SNAP_COMMON") + "/sockets/control"
+var socketPath = os.Getenv("SNAP_COMMON") + "/control"
 
 // TransportClient operations executed by any client requesting server.
 type TransportClient interface {
