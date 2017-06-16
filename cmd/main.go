@@ -24,10 +24,10 @@ import (
 	"os"
 	"strings"
 
-	"github.com/CanonicalLtd/UCWifiConnect/netman"
-	"github.com/CanonicalLtd/UCWifiConnect/server"
-	"github.com/CanonicalLtd/UCWifiConnect/utils"
-	"github.com/CanonicalLtd/UCWifiConnect/wifiap"
+	"launchpad.net/wifi-connect/netman"
+	"launchpad.net/wifi-connect/server"
+	"launchpad.net/wifi-connect/utils"
+	"launchpad.net/wifi-connect/wifiap"
 
 	"github.com/gorilla/mux"
 )
@@ -248,10 +248,12 @@ func main() {
 		}
 		if len(os.Args[2]) < 8 {
 			fmt.Println("Error: password must be at least 8 characters long")
+			return
 		}
 		b, err := utils.HashIt(os.Args[2])
 		if err != nil {
 			fmt.Println("Error hashing:", err)
+			return
 		}
 		fmt.Println(string(b))
 	default:

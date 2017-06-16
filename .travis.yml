@@ -1,7 +1,7 @@
 sudo: required
 dist: xenial
 language: go
-go_import_path: github.com/CanonicalLtd/UCWifiConnect
+go_import_path: launchpad.net/wifi-connect
 go:
   - 1.6
 env:

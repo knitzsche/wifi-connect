@@ -11,7 +11,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/CanonicalLtd/UCWifiConnect/daemon"
+	"launchpad.net/wifi-connect/daemon"
 )
 
 func snapGet(key string) (string, error) {

@@ -11,7 +11,7 @@ Wifi-connect snap allows you to connect the device to an external wifi AP. First
 
 ## Issue tracking
 
-[Issues](https://github.com/CanonicalLtd/UCWifiConnect/issues)
+[Issues](https://bugs.launchpad.net/snappy-hwe-snaps)
 
 ## Use refreshed pi3 image
 
@@ -31,15 +31,6 @@ snap install --edge|beta wifi-connect
 
 Use beta channel if it contains version 0.9, else edge.
 
-## Create content sharing directory for wifi-ap:control interface
-
-```bash
-sudo mkdir /var/snap/wifi-connect/common/sockets
-```
-
-Note: Currently content share interface requires a reboot after connection, as described below.
-
-(TODO: Later we'll use an interface hook script to automatically create that directory)
 
 ## Connect interfaces
 
@@ -51,6 +42,7 @@ snap connect wifi-connect:network-manager network-manager:service
 ```
 
 Note: wifi-ap and network-manager interfaces auto-connect.
+Note: Currently content share interface requires a reboot after connection, as described below.
 
 # Set NetWorkManager to control all networking
 
@@ -115,7 +107,7 @@ Note the DHCP range:
 The portal password must be entered to access wifi-connect web pages.
 
 ```bash
-sudo  wifi-connect set-hash PASSWORD
+sudo  wifi-connect set-portal-password PASSWORD
 ```
 
 ## Join the device AP

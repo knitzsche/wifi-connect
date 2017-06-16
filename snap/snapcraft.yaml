@@ -1,14 +1,15 @@
 name: wifi-connect 
-version: '0.10.1'
+version: 0.10-2
 summary: Connect your device to external wifi over temp wifi AP
 description: |
-    A solution to enable your device to connect to ian external
-    wifi AP using a temporary wifi AP the device puts up and then
-    opening its web portal. Note that wifi-connect daemon assumes
-    control of device network management and other management solutions
-    should not be simultaneously used.
-
-grade: devel
+  A solution to enable your device to connect to ian external
+  wifi AP using a temporary wifi AP the device puts up and then
+  opening its web portal. Note that wifi-connect daemon assumes
+  control of device network management and other management solutions
+  should not be simultaneously used.
+  Please find the source of this snap at:
+  https://code.launchpad.net/~snappy-hwe-team/snappy-hwe-snaps/+git/wifi-connect
+grade: stable
 confinement: strict
 
 apps:
@@ -16,7 +17,7 @@ apps:
     command: cmd 
     plugs: [network, network-bind, network-manager, control]
   daemon:
-    command: service
+    command: service 
     daemon: simple
     plugs: [network-manager, control, network-bind]
 
@@ -24,14 +25,21 @@ plugs:
   control:
     interface: content
     content: socket-directory
-    target: $SNAP_COMMON/sockets
+    target: $SNAP_COMMON
     default-provider: wifi-ap
 
 parts:
   go:
     plugin: go
     source: . 
-    go-importpath: github.com/CanonicalLtd/UCWifiConnect
+    go-importpath: launchpad.net/wifi-connect
+    build-packages:
+      # needed by go get
+        - bzr
+        install: |
+      export GOPATH=$PWD/../go
+      cd $GOPATH/src/launchpad.net/wifi-connect
+     ./run-checks all
   assets:
     plugin: dump
     source: .
@@ -40,7 +48,10 @@ parts:
   hooks:
     plugin: go
     source: hooks
-    go-importpath: github.com/CanonicalLtd/UCWifiConnect
+    go-importpath: launchpad.net/wifi-connect
+    build-packages:
+      # needed by go get
+        - bzr
     install: |
       mkdir -p $SNAPCRAFT_PART_INSTALL/snap/hooks
       mv $SNAPCRAFT_PART_INSTALL/bin/hooks $SNAPCRAFT_PART_INSTALL/snap/hooks/configure
