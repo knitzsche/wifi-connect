@@ -63,24 +63,24 @@ func main() {
 		preConfig.Password = val
 	}
 
-	val, err = snapGet("operational")
+	val, err = snapGet("no-operational")
 	if err != nil {
 		log.Print("== wifi-connect/configure error", err)
 		return
 	}
-	preConfig.Operational = true // default
-	if val == "false" {
-		preConfig.Operational = false
+	preConfig.NoOperational = false // default
+	if val == "true" {
+		preConfig.NoOperational = true
 	}
 
-	val, err = snapGet("reset-config")
+	val, err = snapGet("no-reset-creds")
 	if err != nil {
 		log.Print("== wifi-connect/configure error", err)
 		return
 	}
-	preConfig.ResetCredsRequired = true // default
-	if val == "false" {
-		preConfig.ResetCredsRequired = false
+	preConfig.NoResetCreds = false // default
+	if val == "true" {
+		preConfig.NoResetCreds = true
 	}
 
 	confFile := filepath.Join(os.Getenv("SNAP_COMMON"), "pre-config.json")

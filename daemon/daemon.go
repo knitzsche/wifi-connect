@@ -50,12 +50,12 @@ var PreConfigFile = filepath.Join(os.Getenv("SNAP_COMMON"), "pre-config.json")
 
 // PreConfig is the struct representing a configuration
 type PreConfig struct {
-	Passphrase         string `json:"wifi-ap.passphrase,omitempty"`
-	Ssid               string `json:"wifi-ap.ssid,omitempty"`
-	Interface          string `json:"wifi-ap.interface,omitempty"`
-	Password           string `json:"portal.password,omitempty"`
-	Operational        bool   `json:"portal.operational,omitempty"` //whether to show the operational portal
-	ResetCredsRequired bool   `json:"portal.reset-creds,omitempty"` //whether user must reset passphrase and password on first use of mgmt portal
+	Passphrase    string `json:"wifi-ap.passphrase,omitempty"`
+	Ssid          string `json:"wifi-ap.ssid,omitempty"`
+	Interface     string `json:"wifi-ap.interface,omitempty"`
+	Password      string `json:"portal.password,omitempty"`
+	NoOperational bool   `json:"portal.no-operational,omitempty"` //whether to show the operational portal
+	NoResetCreds  bool   `json:"portal.no-reset-creds,omitempty"` //whether user must reset passphrase and password on first use of mgmt portal
 }
 
 // Client is the base type for both testing and runtime
@@ -255,7 +255,7 @@ func (c *Client) SetDefaults() (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	content, errR := ioutil.ReadFile(ConfigFile)
+	content, errR := ioutil.ReadFile(PreConfigFile)
 	if errR != nil {
 		return true, err
 	}
@@ -269,33 +269,34 @@ func (c *Client) SetDefaults() (bool, error) {
 		c := wifiap.DefaultClient()
 		err := c.SetPassphrase(config.Passphrase)
 		if err != nil {
-			return true, err
+			fmt.Println("== wifi-connect/daemon/SetDefaults: password err:", err)
 		}
 	}
-
 	if len(config.Ssid) > 0 {
 		fmt.Println("== wifi-connect/SetDefaults wifi-ap SSID being set to", config.Ssid)
 		c := wifiap.DefaultClient()
 		err := c.SetSsid(config.Ssid)
 		if err != nil {
-			return true, err
+			fmt.Println("== wifi-connect/daemon/SetDefaults: ssid err:", err)
 		}
 	}
+	//TODO: first get from wifi-ap the interface and set it in wifi-connect
+	// but let preconfig override
 	if len(config.Interface) > 0 {
-		fmt.Println("== wifi-connect/SetDefaults wifi-ap interface being set to", config.Interface)
+		//fmt.Println("== wifi-connect/SetDefaults wifi-ap interface being set to", config.Interface)
 		//TODO implementation
 	}
 	if len(config.Password) > 0 {
 		fmt.Println("== wifi-connect/SetDefaults portal password being set")
 		utils.HashIt(config.Password)
 	}
-	if !config.Opertional > 0 {
-		fmt.Println("== wifi-connect/SetDefaults: don't show opertionational portal")
-		// TODO
+	if config.NoOperational {
+		//fmt.Println("== wifi-connect/SetDefaults: don't show opertionational portal")
+		// TODO implementation
 	}
-	if !config.ResetCredsRequired > 0 {
-		fmt.Println("== wifi-connect/SetDefaults: don't require creds are reset")
-		// TODO
+	if config.NoResetCreds {
+		//fmt.Println("== wifi-connect/SetDefaults: don't require creds are reset")
+		// TODO implementation
 	}
 
 	fmt.Println("== wifi-connect/SetDefaults done")
