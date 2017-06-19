@@ -37,6 +37,12 @@ parts:
       # needed by go get
       - bzr
     install: |
+      # set environment var SKIP_TESTS to 'y' or 'yes' if you want not to execute
+      # this part unit tests in your next compilation.
+      if [ "$SKIP_TESTS" = "yes" ] || [ "$SKIP_TESTS" = "y" ]; then
+        echo "skipping unit tests"
+        exit 0
+      fi
       export GOPATH=$PWD/../go
       cd $GOPATH/src/launchpad.net/wifi-connect
       ./run-checks all
