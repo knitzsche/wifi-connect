@@ -19,7 +19,9 @@ package netman
 
 import (
 	"errors"
+	"fmt"
 	"log"
+	"os"
 	"strings"
 	"time"
 
@@ -379,11 +381,11 @@ func (c *Client) WifisManaged(wifiDevices []string) (map[string]string, error) {
 func (c *Client) Unmanage() error {
 	ifaces, err := c.WifisManaged(c.GetWifiDevices(c.GetDevices()))
 	if err != nil {
-		return fmt.Errorf("== wifi-connect: Error getting managed wifis: %v", err)
+		return fmt.Errorf("Error getting managed wifis: %v", err)
 	}
 	if _, ok := ifaces["wlan0"]; ok {
 		if c.SetIfaceManaged("wlan0", false, c.GetWifiDevices(c.GetDevices())) == "" {
-			return fmt.Errorf("== wifi-connect: No interface was set to unmanaged")
+			return fmt.Errorf("No interface was set to unmanaged")
 		}
 	}
 	return nil
@@ -392,7 +394,7 @@ func (c *Client) Unmanage() error {
 // Manage sets wlan0 to not managed by network manager
 func (c *Client) Manage() error {
 	if c.SetIfaceManaged("wlan0", true, c.GetWifiDevices(c.GetDevices())) == "" {
-		return fmt.Errorf("== wifi-connect: No interface was set to managed")
+		return fmt.Errorf("No interface was set to managed")
 	}
 	return nil
 }
@@ -405,14 +407,14 @@ func (c *Client) ScanAndWriteSsidsToFile(filepath string) bool {
 	if _, err = os.Stat(filepath); os.IsNotExist(err) {
 		file, err = os.Create(filepath)
 		if err != nil {
-			fmt.Printf("Error touching ssids file: %v\n", err)
+			log.Printf("Error touching ssids file: %v", err)
 			return false
 		}
 	}
 
 	file, err = os.OpenFile(filepath, os.O_RDWR, 0644)
 	if err != nil {
-		fmt.Printf("Error opening ssids file: %v\n", err)
+		log.Printf("Error opening ssids file: %v", err)
 		return false
 	}
 
@@ -437,12 +439,12 @@ func (c *Client) scanSsids(writer io.Writer) bool {
 		out = out[:len(out)-1]
 		_, err := writer.Write([]byte(out))
 		if err != nil {
-			fmt.Printf("== wifi-connect: Error writing SSID(s): %v\n ", err)
+			log.Printf("Error writing SSID(s): %v ", err)
 		} else {
-			fmt.Println("== wifi-connect: SSID(s) obtained")
+			log.Print("SSID(s) obtained")
 			return true
 		}
 	}
-	fmt.Println("== wifi-connect: No SSID found")
+	log.Print("No SSID found")
 	return false
 }
