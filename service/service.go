@@ -18,6 +18,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"time"
@@ -109,7 +110,10 @@ func main() {
 
 		// if wlan0 managed, set Unmanaged so that we can bring up wifi-ap
 		// properly
-		client.Unmanage(c)
+		if err := c.Unmanage(); err != nil {
+			fmt.Println(err)
+			continue
+		}
 
 		//wifi-ap UP?
 		wifiUp, err := cw.Enabled()
@@ -120,14 +124,20 @@ func main() {
 
 		//get ssids if wifi-ap Down
 		if !wifiUp {
-			found := client.ScanSsids(utils.SsidsFile, c)
-			client.Unmanage(c)
+			found := c.ScanAndWriteSsidsToFile(utils.SsidsFile)
+			if err := c.Unmanage(); err != nil {
+				fmt.Println(err)
+				continue
+			}
 			if !found {
 				log.Print("No SSIDs found. Continuing to scan for SSIDS...")
 				continue
 			}
-			log.Printf("Starting wifi-ap")
-			cw.Enable()
+			log.Printf("starting wifi-ap")
+			if err := cw.Enable(); err != nil {
+				fmt.Println(err)
+				continue
+			}
 			if client.GetPreviousState() == daemon.OPERATING {
 				client.OperationalServerDown()
 			}

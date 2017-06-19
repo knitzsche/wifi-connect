@@ -53,7 +53,7 @@ func StartManagementServer() error {
 		return err
 	}
 
-	err = listenAndServe(address, managementHandler())
+	err = listenAndServe(Address, managementHandler())
 	if err != nil {
 		Current = None
 		return err
@@ -71,7 +71,7 @@ func StartOperationalServer() error {
 	// change current instance asap we manage this server
 	Current = Operational
 
-	err := listenAndServe(address, operationalHandler())
+	err := listenAndServe(Address, operationalHandler())
 	if err != nil {
 		Current = None
 		return err

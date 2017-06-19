@@ -31,15 +31,6 @@ snap install --edge|beta wifi-connect
 
 Use beta channel if it contains version 0.9, else edge.
 
-## Create content sharing directory for wifi-ap:control interface
-
-```bash
-sudo mkdir /var/snap/wifi-connect/common/sockets
-```
-
-Note: Currently content share interface requires a reboot after connection, as described below.
-
-(TODO: Later we'll use an interface hook script to automatically create that directory)
 
 ## Connect interfaces
 
@@ -51,6 +42,7 @@ snap connect wifi-connect:network-manager network-manager:service
 ```
 
 Note: wifi-ap and network-manager interfaces auto-connect.
+Note: Currently content share interface requires a reboot after connection, as described below.
 
 # Set NetWorkManager to control all networking
 

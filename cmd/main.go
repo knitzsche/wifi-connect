@@ -21,16 +21,15 @@ import (
 	"bufio"
 	"fmt"
 	"log"
-	"net/http"
 	"os"
+	"os/signal"
 	"strings"
+	"sync"
 
 	"launchpad.net/wifi-connect/netman"
 	"launchpad.net/wifi-connect/server"
 	"launchpad.net/wifi-connect/utils"
 	"launchpad.net/wifi-connect/wifiap"
-
-	"github.com/gorilla/mux"
 )
 
 func help() string {
@@ -50,32 +49,6 @@ Commands:
 	return text
 }
 
-func mgmtHandler() *mux.Router {
-	router := mux.NewRouter()
-
-	// Pages routes
-	router.HandleFunc("/", server.ManagementHandler).Methods("GET")
-	router.HandleFunc("/connect", server.ConnectHandler).Methods("POST")
-
-	// Resources path
-	fs := http.StripPrefix("/static/", http.FileServer(http.Dir(server.ResourcesPath)))
-	router.PathPrefix("/static/").Handler(fs)
-
-	return router
-}
-
-func operHandler() *mux.Router {
-	router := mux.NewRouter()
-
-	router.HandleFunc("/", server.OperationalHandler).Methods("GET")
-	router.HandleFunc("/hashit", server.HashItHandler).Methods("POST")
-
-	fs := http.StripPrefix("/static/", http.FileServer(http.Dir(server.ResourcesPath)))
-	router.PathPrefix("/static/").Handler(fs)
-
-	return router
-}
-
 // checkSudo return false if the current user is not root, else true
 func checkSudo() bool {
 	if os.Geteuid() != 0 {
@@ -83,6 +56,19 @@ func checkSudo() bool {
 		return false
 	}
 	return true
+}
+
+func waitForCtrlC() {
+	var endWaiter sync.WaitGroup
+	endWaiter.Add(1)
+	var signalChannel chan os.Signal
+	signalChannel = make(chan os.Signal, 1)
+	signal.Notify(signalChannel, os.Interrupt)
+	go func() {
+		<-signalChannel
+		endWaiter.Done()
+	}()
+	endWaiter.Wait()
 }
 
 func main() {
@@ -242,9 +228,19 @@ func main() {
 		pw = strings.TrimSpace(pw)
 		c.ConnectAp(ssid, pw, ap2device, ssid2ap)
 	case "management":
-		http.ListenAndServe(":8081", mgmtHandler())
+		server.Address = server.TestingAddress
+		if err := server.StartManagementServer(); err != nil {
+			fmt.Printf("Could not start management server: %v\n", err)
+			return
+		}
+		waitForCtrlC()
 	case "operational":
-		http.ListenAndServe(":8081", operHandler())
+		server.Address = server.TestingAddress
+		if err := server.StartOperationalServer(); err != nil {
+			fmt.Printf("Could not start operational server: %v\n", err)
+			return
+		}
+		waitForCtrlC()
 	case "set-portal-password":
 		if len(os.Args) < 3 {
 			fmt.Println("Error: no string to hash provided")
