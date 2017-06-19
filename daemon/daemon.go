@@ -19,12 +19,9 @@ package daemon
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
-	"strings"
 
 	"launchpad.net/wifi-connect/avahi"
-	"launchpad.net/wifi-connect/netman"
 	"launchpad.net/wifi-connect/server"
 	"launchpad.net/wifi-connect/utils"
 	"launchpad.net/wifi-connect/wifiap"
@@ -95,45 +92,6 @@ func (c *Client) GetState() int {
 func (c *Client) SetState(i int) {
 	previousState = state
 	state = i
-}
-
-// ScanSsids sets wlan0 to be managed and then scans
-// for ssids. If found, write the ssids (comma separated)
-// to path and return true, else return false.
-func (c *Client) ScanSsids(path string, nc *netman.Client) bool {
-	c.Manage(nc)
-	SSIDs, _, _ := nc.Ssids()
-	//only write SSIDs when found
-	if len(SSIDs) > 0 {
-		var out string
-		for _, ssid := range SSIDs {
-			out += strings.TrimSpace(ssid.Ssid) + ","
-		}
-		out = out[:len(out)-1]
-		err := ioutil.WriteFile(path, []byte(out), 0644)
-		if err != nil {
-			fmt.Println("== wifi-connect: Error writing SSID(s) to ", path)
-		} else {
-			fmt.Println("== wifi-connect: SSID(s) obtained")
-			return true
-		}
-	}
-	fmt.Println("== wifi-connect: No SSID found")
-	return false
-}
-
-// Unmanage sets wlan0 to be Unmanaged by network manager if it
-// is managed
-func (c *Client) Unmanage(nc *netman.Client) {
-	ifaces, _ := nc.WifisManaged(nc.GetWifiDevices(nc.GetDevices()))
-	if _, ok := ifaces["wlan0"]; ok {
-		nc.SetIfaceManaged("wlan0", false, nc.GetWifiDevices(nc.GetDevices()))
-	}
-}
-
-// Manage sets wlan0 to not managed by network manager
-func (c *Client) Manage(nc *netman.Client) {
-	nc.SetIfaceManaged("wlan0", true, nc.GetWifiDevices(nc.GetDevices()))
 }
 
 // CheckWaitApConnect returns true if the flag wait file exists

@@ -24,6 +24,8 @@ import (
 	"strings"
 	"time"
 
+	"io"
+
 	"github.com/godbus/dbus"
 )
 
@@ -371,4 +373,77 @@ func (c *Client) WifisManaged(wifiDevices []string) (map[string]string, error) {
 		}
 	}
 	return ifaces, nil
+}
+
+// Unmanage sets wlan0 to be Unmanaged by network manager if it
+// is managed
+func (c *Client) Unmanage() error {
+	ifaces, err := c.WifisManaged(c.GetWifiDevices(c.GetDevices()))
+	if err != nil {
+		return fmt.Errorf("== wifi-connect: Error getting managed wifis: %v", err)
+	}
+	if _, ok := ifaces["wlan0"]; ok {
+		if c.SetIfaceManaged("wlan0", false, c.GetWifiDevices(c.GetDevices())) == "" {
+			return fmt.Errorf("== wifi-connect: No interface was set to unmanaged")
+		}
+	}
+	return nil
+}
+
+// Manage sets wlan0 to not managed by network manager
+func (c *Client) Manage() error {
+	if c.SetIfaceManaged("wlan0", true, c.GetWifiDevices(c.GetDevices())) == "" {
+		return fmt.Errorf("== wifi-connect: No interface was set to managed")
+	}
+	return nil
+}
+
+// ScanAndWriteSsidsToFile scans for ssids and writes to file
+func (c *Client) ScanAndWriteSsidsToFile(filepath string) bool {
+
+	var err error
+	var file *os.File
+	if _, err = os.Stat(filepath); os.IsNotExist(err) {
+		file, err = os.Create(filepath)
+		if err != nil {
+			fmt.Printf("Error touching ssids file: %v\n", err)
+			return false
+		}
+	}
+
+	file, err = os.OpenFile(filepath, os.O_RDWR, 0644)
+	if err != nil {
+		fmt.Printf("Error opening ssids file: %v\n", err)
+		return false
+	}
+
+	defer file.Close()
+
+	return c.scanSsids(file)
+
+}
+
+// ScanSsids sets wlan0 to be managed and then scans
+// for ssids. If found, write the ssids (comma separated)
+// to writer and return true, else return false.
+func (c *Client) scanSsids(writer io.Writer) bool {
+	c.Manage()
+	SSIDs, _, _ := c.Ssids()
+	//only write SSIDs when found
+	if len(SSIDs) > 0 {
+		var out string
+		for _, ssid := range SSIDs {
+			out += strings.TrimSpace(ssid.Ssid) + ","
+		}
+		out = out[:len(out)-1]
+		_, err := writer.Write([]byte(out))
+		if err != nil {
+			fmt.Printf("== wifi-connect: Error writing SSID(s): %v\n ", err)
+		} else {
+			fmt.Println("== wifi-connect: SSID(s) obtained")
+			return true
+		}
+	}
+	fmt.Println("== wifi-connect: No SSID found")
+	return false
 }

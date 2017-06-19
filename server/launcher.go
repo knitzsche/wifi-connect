@@ -26,10 +26,6 @@ import (
 	"launchpad.net/wifi-connect/utils"
 )
 
-const (
-	address = ":8080"
-)
-
 // Server running state
 const (
 	Stopped RunningState = 0 + iota
@@ -38,8 +34,16 @@ const (
 	Stopping
 )
 
+const (
+	// TestingAddress listening point for testing servers
+	TestingAddress = ":8081"
+)
+
 // RunningState enum defining which server is up and running
 type RunningState int
+
+// Address where server is listening
+var Address = ":8080"
 
 // State holds current server state
 var State = Stopped

@@ -20,14 +20,14 @@ package server
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
 	"text/template"
+	"time"
 
-	"launchpad.net/wifi-connect/netman"
 	"launchpad.net/wifi-connect/utils"
-	"launchpad.net/wifi-connect/wifiap"
 )
 
 const (
@@ -38,6 +38,8 @@ const (
 
 // ResourcesPath absolute path to web static resources
 var ResourcesPath = filepath.Join(os.Getenv("SNAP"), "static")
+
+var cw interface{}
 
 // Data interface representing any data included in a template
 type Data interface{}
@@ -50,6 +52,9 @@ type SsidsData struct {
 // ConnectingData dynamic data to fulfill the connect result page template
 type ConnectingData struct {
 	Ssid string
+}
+
+type noData struct {
 }
 
 func execTemplate(w http.ResponseWriter, templatePath string, data Data) {
@@ -90,9 +95,15 @@ func ConnectHandler(w http.ResponseWriter, r *http.Request) {
 
 	r.ParseForm()
 
+	pwd := ""
+	pwds := r.Form["pwd"]
+	if len(pwds) > 0 {
+		pwd = pwds[0]
+	}
+
 	ssids := r.Form["ssid"]
 	if len(ssids) == 0 {
-		fmt.Println("== wifi-connect/handler: SSID not available")
+		log.Print(Sprintf("SSID not available"))
 		return
 	}
 	ssid := ssids[0]
@@ -100,33 +111,32 @@ func ConnectHandler(w http.ResponseWriter, r *http.Request) {
 	data := ConnectingData{ssid}
 	execTemplate(w, connectingTemplatePath, data)
 
-	pwd := ""
-	pwds := r.Form["pwd"]
-	if len(pwds) > 0 {
-		pwd = pwds[0]
-	}
+	go func() {
+		log.Print(Sprintf("Connecting to %v\n", ssid))
 
-	fmt.Printf("== wifi-connect/handler: Connecting to %v\n", ssid)
+		err := wifiapClient.Disable()
+		if err != nil {
+			log.Print(Sprintf("Error disabling AP: %v\n", err))
+			return
+		}
 
-	cw := wifiap.DefaultClient()
-	cw.Disable()
+		//connect
+		netmanClient.SetIfaceManaged("wlan0", true, netmanClient.GetWifiDevices(netmanClient.GetDevices()))
+		_, ap2device, ssid2ap := netmanClient.Ssids()
 
-	//connect
-	c := netman.DefaultClient()
-	c.SetIfaceManaged("wlan0", true, c.GetWifiDevices(c.GetDevices()))
-	_, ap2device, ssid2ap := c.Ssids()
+		err = netmanClient.ConnectAp(ssid, pwd, ap2device, ssid2ap)
+		//TODO signal user in portal on failure to connect
+		if err != nil {
+			log.Print(Sprintf("Failed connecting to %v.\n", ssid))
+			return
+		}
 
-	err := c.ConnectAp(ssid, pwd, ap2device, ssid2ap)
+		//remove flag file so that daemon starts checking state
+		//and takes control again
+		waitPath := os.Getenv("SNAP_COMMON") + "/startingApConnect"
+		utils.RemoveFlagFile(waitPath)
+	}()
 
-	//TODO signal user in portal on failure to connect
-	if err != nil {
-		fmt.Printf("== wifi-connect/handler: Failed connecting to %v.\n", ssid)
-	}
-
-	//remove flag file so that daemon starts checking state
-	//and takes control again
-	waitPath := os.Getenv("SNAP_COMMON") + "/startingApConnect"
-	utils.RemoveFlagFile(waitPath)
 }
 
 type disconnectData struct {
@@ -165,6 +175,50 @@ func HashItHandler(w http.ResponseWriter, r *http.Request) {
 
 // DisconnectHandler allows user to disconnect from external AP
 func DisconnectHandler(w http.ResponseWriter, r *http.Request) {
-	c := netman.DefaultClient()
-	c.DisconnectWifi(c.GetWifiDevices(c.GetDevices()))
+	netmanClient.DisconnectWifi(netmanClient.GetWifiDevices(netmanClient.GetDevices()))
+}
+
+// RefreshHandler handles ssids refreshment
+func RefreshHandler(w http.ResponseWriter, r *http.Request) {
+
+	// show same page. After refresh operation, management page should show a refresh alert
+	ManagementHandler(w, r)
+
+	go func() {
+		if err := netmanClient.Unmanage(); err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		apUp, err := wifiapClient.Enabled()
+		if err != nil {
+			fmt.Println(Sprintf("An error happened while requesting current AP status: %v\n", err))
+			return
+		}
+
+		if apUp {
+			err := wifiapClient.Disable()
+			if err != nil {
+				fmt.Println(Sprintf("An error happened while bringing AP down: %v\n", err))
+				return
+			}
+		}
+
+		for found := netmanClient.ScanAndWriteSsidsToFile(utils.SsidsFile); !found; found = netmanClient.ScanAndWriteSsidsToFile(utils.SsidsFile) {
+			time.Sleep(5 * time.Second)
+		}
+
+		if err := netmanClient.Unmanage(); err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		err = wifiapClient.Enable()
+		if err != nil {
+			fmt.Println(Sprintf("An error happened while bringing AP up: %v\n", err))
+			return
+		}
+
+		fmt.Println("== wifi-connect/RefreshHandler: starting wifi-ap")
+	}()
 }
