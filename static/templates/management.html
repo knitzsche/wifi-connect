@@ -4,7 +4,7 @@
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-	<title>Select WIFI</title>
+	<title>Select Wi-Fi</title>
 
     <link rel="stylesheet" href="/static/css/application.css" />
 </head>
@@ -12,25 +12,23 @@
 <body>
     <div class="wrapper">
         <div id="main-content" class="inner-wrapper">
-	   <div class="row no-border" id="login">
-		 <ul class="no-bullets">
-			 <li><p>Password:</p></li>
-			 <li><input type="password" id="passphrasePage"/></li>
-			 <li>
-				<input type="checkbox" id="showpassphrasePage" onchange="show_passphrase('Page')"/>
-				<label for="showpassphrasePage">show passphrase</label>
-			</li>
-			<li><input type="button" value="Continue" onclick="authenticate()"/></li>
-		</ul>
-	   </div>
+            <div class="row no-border" id="login">
+                <ul class="no-bullets">
+                    <li><p>Password:</p></li>
+                    <li><input type="password" id="passphrasePage"/></li>
+                    <li>
+                        <input type="checkbox" id="showpassphrasePage" onchange="show_passphrase('Page')"/>
+                        <label for="showpassphrasePage">show passphrase</label>
+                    </li>
+                    <li><input type="button" value="Continue" onclick="authenticate()"/></li>
+                </ul>
+            </div>
 
            <div class="row no-border" id="grid">
-
-                <h2>Select WIFI to connect to</h2>
-                <fieldset>
-                <div class="twelve-col">
+               <h2>Select Wi-Fi to connect to:</h2>
+               <fieldset>
+                <br/>
                 <table>
-                <tbody>
                 {{range $i, $ssid := .Ssids}}
                 <tr>
                     <th scope="row">
@@ -51,27 +49,39 @@
                             <li>
                                  <div id="alert{{$i}}" class="cheshire box" style="background-color: #eee">
                                     <h3>Caution!</h3>
-                                    <p>Continuing will disconnect you from the device by taking down its WIFI network. 
+                                    <p>Continuing will disconnect you from the device by taking down its Wi-Fi network. 
                                         This page will be unavailable. After continuing, you may connect to the device 
-                                        through its new WIFI connection. Proceed?.</p>    
+                                        through its new Wi-Fi connection. Proceed?.</p>    
                                 </div>
                             </li>
                             <li>
                                 <input type="button" value="Cancel" class="button--primary" onclick="clear_row({{$i}})"/>
                                 <input type="button" id="connect{{$i}}" value="Connect" class="button--primary" onclick="do_connect({{$i}})"/>
                             </li>
-                            
                         </ul>
                         </fieldset>
                         </div>
                     </th>
                 </tr>
                 {{end}}
-                </tbody>
                 </table>
+
+                <div class="box" style="background-color: #eee">
+                    <h3>Warning</h3>
+                    <p>This takes down the device AP and disconnects you. Please reconnect in a minute or two</p>
+                    <input type="button" value="Refresh Wi-Fi Access Points" class="button--primary" onclick="do_refresh()"/>
                 </div>
+
                 </fieldset>
             </div>
+            
+            <div class="row no-border" id="refreshingAlert">
+                <h3>Refreshing Wi-Fi access points...</h3>
+                <div class="twelve-col box" style="background-color: #eee">
+                    <p>You have been disconnected. The device is refreshing Wi-Fi access points. Please rejoin the device access point and reload this page in a minute or two.</p>
+                </div>
+            </div>
+
         </div>
     </div>
 
@@ -82,33 +92,38 @@
     </form>
 
 <script>
-        $(document).ready(function(){
-                $('#grid').css('display', 'none')      
+    $(document).ready(function() {
+        $('#grid').css('display', 'none')
+        $('#refreshingAlert').css('display', 'none')
 	})
 	function showSsids() {
-	    $('#login').css('display', 'none');      
-	    $('#grid').css('display', 'block');     
+	    $('#login').css('display', 'none'); 
+	    $('#grid').css('display', 'block');
 	}
-	function authenticate(){
-            var pw = $('#passphrasePage').val();
+    function showRefreshingAlert() {
+	    $('#grid').css('display', 'none');
+        $('#refreshingAlert').css('display', 'block');
+    }
+	function authenticate() {
+        var pw = $('#passphrasePage').val();
 	    if ( pw.length < 8) {
-		alert("Password must be at least 8 characters long");
+		    alert("Password must be at least 8 characters long");
 	    } else {
 	        $.ajax({
 	          type: "POST",
 	          url: "/hashit",
 	          data: {Hash: pw}
 	        }).done(function (hashRet) {
-		    console.log("in ajax done.", hashRet);
-		    hash = JSON.parse(hashRet);
-		    console.log(hash)
-		    if (hash.HashMatch) {
-			showSsids();
-		    } else {
-			alert("Your password does not match, please try again");
-		    }
+                console.log("in ajax done.", hashRet);
+                hash = JSON.parse(hashRet);
+                console.log(hash)
+                if (hash.HashMatch) {
+                    showSsids();
+                } else {
+                    alert("Your password does not match, please try again");
+                }
 	        })
-            }
+        }
 	}    
 </script>
 
@@ -149,6 +164,13 @@ function do_connect(i) {
         }
     }  
 }
+
+function do_refresh() {
+    showRefreshingAlert()
+    $.ajax({
+        url: '/refresh'
+    })
+} 
 </script>
 </body>
 </html>
