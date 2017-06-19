@@ -114,7 +114,7 @@ func main() {
 		//wifi-ap UP?
 		wifiUp, err := cw.Enabled()
 		if err != nil {
-			log.Printf("Error when checking wifi-ap.Enabled(): %v", err)
+			log.Printf("Error checking wifi-ap.Enabled(): %v", err)
 			continue // try again since no better course of action
 		}
 

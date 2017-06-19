@@ -114,7 +114,7 @@ func main() {
 			fmt.Println(err)
 			return
 		}
-		fmt.Println("Entering MANUAL Mode. Wifi-connect has stopped managing state. Use 'start' to restore normal operations")
+		fmt.Println("entering MANUAL Mode. Wifi-connect has stopped managing state. Use 'start' to restore normal operations")
 	case "start":
 		if !checkSudo() {
 			return
