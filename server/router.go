@@ -40,7 +40,7 @@ func managementHandler() *mux.Router {
 	return router
 }
 
-// operationalHandler handles request for web UI when connected to external WIFI
+// operationalHandler handles request for web UI when connected to external Wi-Fi
 func operationalHandler() *mux.Router {
 	router := mux.NewRouter()
 
