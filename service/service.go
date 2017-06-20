@@ -29,12 +29,12 @@ import (
 )
 
 func main() {
-
 	client := daemon.GetClient()
 	preconfigured, errP := client.SetDefaults()
 	if preconfigured {
 		fmt.Println("== wifi-connect/daemon: preconfiguration used")
 	}
+	config := client.GetConfig()
 	if errP != nil {
 		fmt.Println("== wifi-connect/daemon: preconfiguration error:", errP)
 	}
@@ -101,7 +101,9 @@ func main() {
 			if client.GetPreviousState() == daemon.MANAGING {
 				client.ManagementServerDown()
 			}
-			client.OperationalServerUp()
+			if !config.NoOperational {
+				client.OperationalServerUp()
+			}
 			continue
 		}
 
