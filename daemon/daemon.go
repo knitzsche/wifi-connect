@@ -46,11 +46,14 @@ var state = STARTING
 // PreConfigFile is the path to the file that stores the hash of the portals password
 var PreConfigFile = filepath.Join(os.Getenv("SNAP_COMMON"), "pre-config.json")
 
+// Config is the pkg var holding preconfig, if any
+var Config PreConfig
+
 // PreConfig is the struct representing a configuration
 type PreConfig struct {
-	Passphrase    string `json:"wifi-ap.passphrase,omitempty"`
-	Ssid          string `json:"wifi-ap.ssid,omitempty"`
-	Interface     string `json:"wifi-ap.interface,omitempty"`
+	Passphrase    string `json:"wifi.security-passphrase,omitempty"`
+	Ssid          string `json:"wifi.ssid,omitempty"`
+	Interface     string `json:"wifi.interface,omitempty"`
 	Password      string `json:"portal.password,omitempty"`
 	NoOperational bool   `json:"portal.no-operational,omitempty"` //whether to show the operational portal
 	NoResetCreds  bool   `json:"portal.no-reset-creds,omitempty"` //whether user must reset passphrase and password on first use of mgmt portal
@@ -205,59 +208,49 @@ func (c *Client) OperationalServerDown() {
 	}
 }
 
+// GetConfig returns the preconfiguration that may have been done via snap set
+func (c *Client) GetConfig() *PreConfig {
+	return &Config
+}
+
 // SetDefaults checks if there is a configuration file, and if so it applies the configuration,
 // returning true, nil on success, true, error on failure. If there is no configuration file,
-// false, error is returned
+// false, error is returned.
 func (c *Client) SetDefaults() (bool, error) {
-	fmt.Println("== wifi-connect/SetDefaults running")
-	_, err := os.Open(PreConfigFile)
-	if err != nil {
-		return false, err
-	}
 	content, errR := ioutil.ReadFile(PreConfigFile)
 	if errR != nil {
 		return true, err
 	}
-	config := &PreConfig{}
-	errJ := json.Unmarshal(content, config)
+	errJ := json.Unmarshal(content, &Config)
 	if errJ != nil {
 		return true, errJ
 	}
-	if len(config.Passphrase) > 0 {
-		fmt.Println("== wifi-connect/SetDefaults wifi-ap passphrase being set")
-		c := wifiap.DefaultClient()
-		err := c.SetPassphrase(config.Passphrase)
+	cw := wifiap.DefaultClient()
+	ap, errShow := cw.Show()
+	if errShow != nil {
+		fmt.Println("== wifi-connect/daemon/SetDefaults: wifi-ap.Show err:", errShow)
+	}
+	if ap["wifi.security-passphrase"] != Config.Passphrase {
+		if len(Config.Passphrase) > 0 {
+			err := cw.SetPassphrase(Config.Passphrase)
+			fmt.Println("== wifi-connect/SetDefaults wifi-ap passphrase being set")
+			if err != nil {
+				fmt.Println("== wifi-connect/daemon/SetDefaults: passphrase err:", err)
+			}
+		}
+	}
+	if len(Config.Password) > 0 {
+		fmt.Println("== wifi-connect/SetDefaults portal password being set")
+		_, err := utils.HashIt(Config.Password)
 		if err != nil {
 			fmt.Println("== wifi-connect/daemon/SetDefaults: password err:", err)
 		}
 	}
-	if len(config.Ssid) > 0 {
-		fmt.Println("== wifi-connect/SetDefaults wifi-ap SSID being set to", config.Ssid)
-		c := wifiap.DefaultClient()
-		err := c.SetSsid(config.Ssid)
-		if err != nil {
-			fmt.Println("== wifi-connect/daemon/SetDefaults: ssid err:", err)
-		}
+	if Config.NoOperational {
+		fmt.Println("== wifi-connect/SetDefaults: operational portal is now disabled")
 	}
-	//TODO: first get from wifi-ap the interface and set it in wifi-connect
-	// but let preconfig override
-	if len(config.Interface) > 0 {
-		//fmt.Println("== wifi-connect/SetDefaults wifi-ap interface being set to", config.Interface)
-		//TODO implementation
+	if Config.NoResetCreds {
+		fmt.Println("== wifi-connect/SetDefaults: reset creds requirement is now disabled")
 	}
-	if len(config.Password) > 0 {
-		fmt.Println("== wifi-connect/SetDefaults portal password being set")
-		utils.HashIt(config.Password)
-	}
-	if config.NoOperational {
-		//fmt.Println("== wifi-connect/SetDefaults: don't show opertionational portal")
-		// TODO implementation
-	}
-	if config.NoResetCreds {
-		//fmt.Println("== wifi-connect/SetDefaults: don't require creds are reset")
-		// TODO implementation
-	}
-
-	fmt.Println("== wifi-connect/SetDefaults done")
 	return true, nil
 }
