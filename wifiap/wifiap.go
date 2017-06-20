@@ -163,8 +163,11 @@ func (client *Client) SetSsid(ssid string) error {
 
 // SetPassphrase sets the credential to access the wifi ap
 func (client *Client) SetPassphrase(passphrase string) error {
-	if len(passphrase) < 13 {
-		return fmt.Errorf("Passphrase must be at least 13 chars in length. Please try again")
+	if len(passphrase) < 8 {
+		return fmt.Errorf("Passphrase must be at least 8 chars in length. Please try again")
+	}
+	if len(passphrase) > 63 {
+		return fmt.Errorf("Passphrase must be less than 64 long. Please try again")
 	}
 
 	params := map[string]string{
