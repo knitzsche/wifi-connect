@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+	<title>First config</title>
+
+    <link rel="stylesheet" href="/static/css/application.css" />
+</head>
+
+<body>
+
+<script>
+// window.onload = function() {
+//     document.getElementById('passphrase').onchange = validatePassword
+// }
+// function to confirm password, and confirmation are equals.
+// tag param is the name of primary input field for password.
+function validate_password(tag) {
+
+    //TODO TRACE
+    console.log("confirm_pwd")
+
+    var pwd = document.getElementById(tag)
+    var pwd_confirm = document.getElementById(tag + '_confirm')
+
+    //TODO TRACE
+    console.log("pwd:" + console.log(pwd))
+    console.log("pwd_confirm" + console.log(pwd_confirm))
+
+    if (pwd.value != pwd_confirm.value) {
+        pwd_confirm.setCustomValidity("Values don't match")
+    } else {
+        pwd.confirm.setCustomValidity("")
+    }
+}
+</script>
+
+    <div class="wrapper">
+        <div id="main-content" class="inner-wrapper">
+            <div class="row no-border" id="config">
+                <h2>First configuration</h2>
+                <h3>You need to set these config values before continuing:</h3>
+                <fieldset>
+                <ul class="no-bullets">
+                    <li>
+                        <div class="box">
+                            <label for="ssid">Access Point SSID:</label>
+                            <input type="text" id="ssid" required="required" value="{{.Ssid}}"/>
+                        </div>
+                    </li>
+                    <li>
+                        <div class="box">
+                            <ul class="no-bullets">
+                                <li>
+                                    <label for="passphrase">Access Point passphrase:</label>
+                                    <input type="password" id="passphrase" required="required" onchange="validate_password(this.id)" value="{{.Passphrase}}"/>
+                                </li>
+                                <li>
+                                    <label for="passphrase_confirm">Confirm passphrase:</label>
+                                    <input type="password" id="passphrase_confirm" required="required" onkeyup="validate_password('passphrase')"/>
+                                </li>
+                            </ul>
+                        </div>
+                    </li>
+                    <li>
+                        <div class="box">
+                            <ul class="no-bullets">
+                                <li>
+                                    <label for="portal_pwd">Portal password:</label>
+                                    <input type="password" id="portal_pwd" required="required" onchange="validate_password(this.id)"/>
+                                </li>
+                                <li>
+                                    <label for="portal_pwd_confirm">Confirm portal password:</label>
+                                    <input type="password" id="portal_pwd_confirm" required="required" onkeyup="validate_password('portal_pwd')"/>
+                                </li>
+                            </ul>
+                        </div>
+                    </li>
+                    <li>
+                        <div class="box" style="background-color: #eee">
+                            <h3>Warning</h3>
+                            <p>This takes down the device AP and disconnects you. Please reconnect in a minute or two</p>
+                            <input type="button" value="Apply configuration" class="button--primary" onclick="do_submit()"/>
+                        </div>
+                    </li>
+                </ul>
+                </fieldset>
+            </div>
+            
+        </div>
+        
+    </div>
+</body>
+</html>

@@ -34,15 +34,26 @@ const (
 	managementTemplatePath  = "/templates/management.html"
 	connectingTemplatePath  = "/templates/connecting.html"
 	operationalTemplatePath = "/templates/operational.html"
+	firstConfigTemplatePath = "/templates/first_config.html"
 )
 
 // ResourcesPath absolute path to web static resources
 var ResourcesPath = filepath.Join(os.Getenv("SNAP"), "static")
 
+// first time management portal is accessed this file is created.
+var firstConfigFlagFile = filepath.Join(os.Getenv("SNAP_COMMON"), ".first_config")
+
 var cw interface{}
 
 // Data interface representing any data included in a template
 type Data interface{}
+
+// FirstConfigData already existing data to show in input boxes when first config
+type FirstConfigData struct {
+	Ssid           string
+	Passphrase     string
+	PortalPassword string
+}
 
 // SsidsData dynamic data to fulfill the SSIDs page template
 type SsidsData struct {
@@ -74,8 +85,47 @@ func execTemplate(w http.ResponseWriter, templatePath string, data Data) {
 	}
 }
 
+// firstConfigHandler manages first configuration parameters set
+func firstConfigHandler(w http.ResponseWriter, r *http.Request) {
+
+	//TODO TRACE
+	log.Println("FIRSTCONFIGHANDLER")
+
+	// get current wifi-ap SSID and passphrase.
+	result, err := wifiapClient.Show()
+	if err != nil {
+		log.Printf("Error getting wifi configuration: %v\n", err)
+		//TODO needed to have a generic error page?
+		return
+	}
+
+	var ok bool
+	var ssid string
+	if ssid, ok = result["wifi.ssid"].(string); !ok {
+		log.Println("Could not read wifi.ssid param")
+		return
+	}
+
+	var passphrase string
+	if passphrase, ok = result["wifi.security-passphrase"].(string); !ok {
+		log.Println("Could not read wifi.security-passphrase param")
+		return
+	}
+
+	firstConfigData := FirstConfigData{Ssid: ssid, Passphrase: passphrase}
+	execTemplate(w, firstConfigTemplatePath, firstConfigData)
+}
+
 // ManagementHandler lists the current available SSIDs
 func ManagementHandler(w http.ResponseWriter, r *http.Request) {
+
+	//TODO complete this condition with the preconfigured one for not show this ever:
+	// if this is the first time the portal is up, redirect to first config template
+	if _, err := os.Stat(firstConfigFlagFile); os.IsNotExist(err) {
+		firstConfigHandler(w, r)
+		return
+	}
+
 	// daemon stores current available ssids in a file
 	ssids, err := utils.ReadSsidsFile()
 	if err != nil {
@@ -92,6 +142,9 @@ func ManagementHandler(w http.ResponseWriter, r *http.Request) {
 
 // ConnectHandler reads form got ssid and password and tries to connect to that network
 func ConnectHandler(w http.ResponseWriter, r *http.Request) {
+
+	//TODO TRACE
+	log.Println("CONNECTHANDLER")
 
 	r.ParseForm()
 
