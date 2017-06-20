@@ -21,6 +21,10 @@ apps:
     daemon: simple
     plugs: [network-manager, control, network-bind]
 
+hooks:
+   configure:
+     plugs: [network]
+ 
 plugs:
   control:
     interface: content
@@ -40,20 +44,10 @@ parts:
       export GOPATH=$PWD/../go
       cd $GOPATH/src/launchpad.net/wifi-connect
       #./run-checks all
+      mkdir -p $SNAPCRAFT_PART_INSTALL/snap/hooks
+      mv $SNAPCRAFT_PART_INSTALL/bin/hooks $SNAPCRAFT_PART_INSTALL/snap/hooks/configure
   assets:
     plugin: dump
     source: .
     stage:
       - static
-  hooks:
-    plugin: go
-    source: hooks
-    go-importpath: launchpad.net/wifi-connect
-    build-packages:
-      # needed by go get
-      - bzr
-    install: |
-      export GOPATH=$PWD/../go
-      cd $GOPATH/src/launchpad.net/wifi-connect
-      mkdir -p $SNAPCRAFT_PART_INSTALL/snap/hooks
-      mv $SNAPCRAFT_PART_INSTALL/bin/hooks $SNAPCRAFT_PART_INSTALL/snap/hooks/configure
