@@ -20,14 +20,30 @@ package netman
 import (
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 	"time"
 
-	"io"
-
 	"github.com/godbus/dbus"
 )
+
+// Operations defines operations for this package client
+type Operations interface {
+	GetDevices() []string
+	GetWifiDevices(devices []string) []string
+	GetAccessPoints(devices []string, ap2device map[string]string) []string
+	ConnectAp(ssid string, p string, ap2device map[string]string, ssid2ap map[string]string) error
+	Ssids() ([]SSID, map[string]string, map[string]string)
+	Connected(devices []string) bool
+	ConnectedWifi(wifiDevices []string) bool
+	DisconnectWifi(wifiDevices []string) int
+	SetIfaceManaged(iface string, state bool, devices []string) string
+	WifisManaged(wifiDevices []string) (map[string]string, error)
+	Unmanage() error
+	Manage() error
+	ScanAndWriteSsidsToFile(filepath string) bool
+}
 
 // Client type to support unit test mock and runtime execution
 type Client struct {

@@ -25,6 +25,16 @@ import (
 	"time"
 )
 
+// Operations interface defining operations implemented by wifiap client
+type Operations interface {
+	Show() (map[string]interface{}, error)
+	Enabled() (bool, error)
+	Enable() error
+	Disable() error
+	SetSsid(string) error
+	SetPassphrase(string) error
+}
+
 // Client struct exposing wifi-ap operations
 type Client struct {
 	restClient *RestClient

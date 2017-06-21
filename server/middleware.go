@@ -26,34 +26,8 @@ import (
 	"launchpad.net/wifi-connect/wifiap"
 )
 
-// Operations interface defining operations implemented by wifiap client
-type wifiapOperations interface {
-	Show() (map[string]interface{}, error)
-	Enabled() (bool, error)
-	Enable() error
-	Disable() error
-	SetSsid(string) error
-	SetPassphrase(string) error
-}
-
-type netmanOperations interface {
-	GetDevices() []string
-	GetWifiDevices(devices []string) []string
-	GetAccessPoints(devices []string, ap2device map[string]string) []string
-	ConnectAp(ssid string, p string, ap2device map[string]string, ssid2ap map[string]string) error
-	Ssids() ([]netman.SSID, map[string]string, map[string]string)
-	Connected(devices []string) bool
-	ConnectedWifi(wifiDevices []string) bool
-	DisconnectWifi(wifiDevices []string) int
-	SetIfaceManaged(iface string, state bool, devices []string) string
-	WifisManaged(wifiDevices []string) (map[string]string, error)
-	Unmanage() error
-	Manage() error
-	ScanAndWriteSsidsToFile(filepath string) bool
-}
-
-var wifiapClient wifiapOperations
-var netmanClient netmanOperations
+var wifiapClient wifiap.Operations
+var netmanClient netman.Operations
 
 // Middleware to pre-process web service requests
 func Middleware(inner http.Handler) http.Handler {
