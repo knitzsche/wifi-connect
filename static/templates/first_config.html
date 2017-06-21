@@ -11,33 +11,6 @@
 </head>
 
 <body>
-
-<script>
-// window.onload = function() {
-//     document.getElementById('passphrase').onchange = validatePassword
-// }
-// function to confirm password, and confirmation are equals.
-// tag param is the name of primary input field for password.
-function validate_password(tag) {
-
-    //TODO TRACE
-    console.log("confirm_pwd")
-
-    var pwd = document.getElementById(tag)
-    var pwd_confirm = document.getElementById(tag + '_confirm')
-
-    //TODO TRACE
-    console.log("pwd:" + console.log(pwd))
-    console.log("pwd_confirm" + console.log(pwd_confirm))
-
-    if (pwd.value != pwd_confirm.value) {
-        pwd_confirm.setCustomValidity("Values don't match")
-    } else {
-        pwd.confirm.setCustomValidity("")
-    }
-}
-</script>
-
     <div class="wrapper">
         <div id="main-content" class="inner-wrapper">
             <div class="row no-border" id="config">
@@ -47,20 +20,26 @@ function validate_password(tag) {
                 <ul class="no-bullets">
                     <li>
                         <div class="box">
-                            <label for="ssid">Access Point SSID:</label>
-                            <input type="text" id="ssid" required="required" value="{{.Ssid}}"/>
-                        </div>
-                    </li>
-                    <li>
-                        <div class="box">
                             <ul class="no-bullets">
+                                <li><h3>Access Point:</h3></li>
                                 <li>
-                                    <label for="passphrase">Access Point passphrase:</label>
-                                    <input type="password" id="passphrase" required="required" onchange="validate_password(this.id)" value="{{.Passphrase}}"/>
+                                    <label for="ssid">SSID:</label>
+                                    <input type="text" id="ssid" required="required" value="{{.Ssid}}" placeholder="Enter SSID"/>
+                                </li>
+                                <li>
+                                    <label for="passphrase">Passphrase:</label>
+                                    <input type="password" id="passphrase" required="required" onchange="validate_password(this.id.value)" value="{{.Passphrase}}"/>
                                 </li>
                                 <li>
                                     <label for="passphrase_confirm">Confirm passphrase:</label>
-                                    <input type="password" id="passphrase_confirm" required="required" onkeyup="validate_password('passphrase')"/>
+                                    <input type="password" id="passphrase_confirm" required="required" onblur="validate_password('passphrase')"/>
+                                </li>
+                                <li>
+                                    <div class="p-notification--negative cheshire" id="passphrase_error">
+                                        <p class="p-notification__response">
+                                            <span class="p-notification__status">Error:</span> Passphrases don't match
+                                        </p>
+                                    </div>
                                 </li>
                             </ul>
                         </div>
@@ -93,5 +72,35 @@ function validate_password(tag) {
         </div>
         
     </div>
+<script>
+// function to confirm password, and confirmation are equals.
+// tag param is the name of primary input field for password.
+function validate_password(tag) {
+
+    //TODO TRACE
+    console.log("confirm_pwd: " + tag)
+
+    var pwd = document.getElementById(tag)
+    var pwd_confirm = document.getElementById(tag + '_confirm')
+
+    //TODO TRACE
+    console.log("pwd.value: "+ console.log(pwd.value))
+    console.log("pwd_confirm.value: "+console.log(pwd_confirm.value))
+
+    if (pwd.value != pwd_confirm.value) {
+        console.log("values don't match...")
+
+        $('#' + tag + '_error').css('display', 'block')
+
+        pwd_confirm.setCustomValidity("Values don't match")
+    } else {
+        console.log("nothing...")
+        pwd.confirm.setCustomValidity("")
+    }
+}
+
+ $('#login').css('display', 'none'); 
+	    $('#grid').css('display', 'block');
+</script>
 </body>
 </html>
