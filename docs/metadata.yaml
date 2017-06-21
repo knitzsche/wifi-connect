@@ -1,0 +1,12 @@
+site_title: wifi-connect
+site_logo_url: https://assets.ubuntu.com/v1/c5cb0f8e-picto-ubuntu.svg
+navigation:
+  - title: Introduction
+    location: index.md
+    children:
+    - title: Installation
+      location: installation.md
+    - title: Integrating into an image
+      location: integrate.md
+    - title: Frequently asked questions
+      location: faq.md
