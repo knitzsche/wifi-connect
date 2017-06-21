@@ -1,7 +1,4 @@
-// Import the theme
-@import '../../node_modules/ubuntu-vanilla-theme/scss/theme';
-// Run the theme
-@include ubuntu-vanilla-theme;
+@import 'node_modules/vanilla-framework/scss/build';
 
 // Customise theme
 .collapse{
