@@ -7,6 +7,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"log"
+
 	"launchpad.net/wifi-connect/wifiap"
 )
 
@@ -37,21 +39,50 @@ type PortalConfig struct {
 	NoOperational      bool   `json:"portal.no-operational"`
 }
 
+func defaultPortalConfig() *PortalConfig {
+	return &PortalConfig{
+		Password:           "",
+		NoResetCredentials: false,
+		NoOperational:      false,
+	}
+}
+
 // config currently stored in local json file is completely storable in PortalConfig
 // If needed to scale, we could rewrite this method to support a more generic type
 func readLocalConfig() (*PortalConfig, error) {
+
+	if _, err := os.Stat(configFile); os.IsNotExist(err) {
+		log.Printf("Not found local config file at %v. Applying default local configuration", configFile)
+		return defaultPortalConfig(), nil
+	}
+
 	fileContents, err := ioutil.ReadFile(configFile)
 	if err != nil {
 		return nil, fmt.Errorf("Error reading json config file: %v", err)
 	}
 
-	var portalConfig PortalConfig
-	err = json.Unmarshal(fileContents, &portalConfig)
+	portalConfig := defaultPortalConfig()
+	err = json.Unmarshal(fileContents, portalConfig)
 	if err != nil {
 		return nil, fmt.Errorf("Error unmarshalling json config file contents: %v", err)
 	}
 
-	return &portalConfig, nil
+	return portalConfig, nil
+}
+
+func writeLocalConfig(p *PortalConfig) error {
+
+	bytes, err := json.Marshal(p)
+	if err != nil {
+		return fmt.Errorf("Could not marshal local config to raw data: %v", err)
+	}
+
+	err = ioutil.WriteFile(configFile, bytes, 0644)
+	if err != nil {
+		return fmt.Errorf("Could not write local config to file: %v", err)
+	}
+
+	return nil
 }
 
 func readRemoteConfig() (*WifiConfig, error) {
@@ -67,10 +98,12 @@ func readRemoteConfig() (*WifiConfig, error) {
 		Interface:     settings["wifi.interface"].(string),
 		Regdomain:     settings["wifi.regdomain"].(string),
 		Channel:       settings["wifi.channel"].(int),
-		OperationMode: settings["wifi.operational-mode"].(string)}, nil
+		OperationMode: settings["wifi.operational-mode"].(string),
+	}, nil
 }
 
-func readConfig() (*Config, error) {
+// ReadConfig reads all config, remote and local, at the same time
+func ReadConfig() (*Config, error) {
 	wifiConfig, err := readRemoteConfig()
 	if err != nil {
 		return nil, err
