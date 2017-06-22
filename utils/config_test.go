@@ -9,6 +9,8 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"gopkg.in/check.v1"
 )
 
 const testLocalConfig = `
@@ -37,6 +39,12 @@ var testPortalConfig = &PortalConfig{"the_password", true, false}
 
 var rand uint32
 var randmu sync.Mutex
+
+func Test(t *testing.T) { check.TestingT(t) }
+
+type S struct{}
+
+var _ = check.Suite(&S{})
 
 func randomName() string {
 	randmu.Lock()
@@ -69,186 +77,123 @@ func createTempFile(content string) (*os.File, error) {
 	return tmpfile, nil
 }
 
-func verifyLocalConfig(t *testing.T, cfg *PortalConfig, expectedPwd string, expectedNoResetCredentials bool, expectedNoOperational bool) {
-	if cfg.Password != expectedPwd {
-		t.Errorf("Local config portal.password is %v but expected %v", cfg.Password, expectedPwd)
-	}
-
-	if cfg.NoResetCredentials != expectedNoResetCredentials {
-		t.Errorf("Local config portal.no-reset-creds is %v but expected %v", cfg.NoResetCredentials, expectedNoResetCredentials)
-	}
-
-	if cfg.NoOperational != expectedNoOperational {
-		t.Errorf("Local config portal.no-operational is %v but expected %v", cfg.NoOperational, expectedNoOperational)
-	}
+func verifyLocalConfig(c *check.C, cfg *PortalConfig, expectedPwd string, expectedNoResetCredentials bool, expectedNoOperational bool) {
+	c.Assert(cfg.Password, check.Equals, expectedPwd)
+	c.Assert(cfg.NoResetCredentials, check.Equals, expectedNoResetCredentials)
+	c.Assert(cfg.NoOperational, check.Equals, expectedNoOperational)
 }
 
-func verifyDefaultLocalConfig(t *testing.T, cfg *PortalConfig) {
-	verifyLocalConfig(t, cfg, "", false, false)
+func verifyDefaultLocalConfig(c *check.C, cfg *PortalConfig) {
+	verifyLocalConfig(c, cfg, "", false, false)
 }
 
-func TestReadLocalConfig(t *testing.T) {
+func (s *S) TestReadLocalConfig(c *check.C) {
 	f, err := createTempFile(testLocalConfig)
-	if err != nil {
-		t.Errorf("Temp file error: %v", err)
-	}
+	c.Assert(err, check.IsNil)
 
 	defer os.Remove(f.Name())
-
 	configFile = f.Name()
 
 	cfg, err := readLocalConfig()
-	if err != nil {
-		t.Errorf("Error reading local config file: %v", err)
-	}
+	c.Assert(err, check.IsNil)
 
-	verifyLocalConfig(t, cfg, "the_password", true, false)
+	verifyLocalConfig(c, cfg, "the_password", true, false)
 }
 
-func TestReadLocalConfigBadEntry(t *testing.T) {
+func (s *S) TestReadLocalConfigBadEntry(c *check.C) {
 	// No matter if there are additional not recognized params, only known should be marshalled
 	f, err := createTempFile(testLocalConfigBadEntry)
-	if err != nil {
-		t.Errorf("Temp file error: %v", err)
-	}
+	c.Assert(err, check.IsNil)
 
 	defer os.Remove(f.Name())
-
 	configFile = f.Name()
 
 	cfg, err := readLocalConfig()
-	if err != nil {
-		t.Errorf("Error reading local config file: %v", err)
-	}
+	c.Assert(err, check.IsNil)
 
-	verifyLocalConfig(t, cfg, "the_password", true, false)
+	verifyLocalConfig(c, cfg, "the_password", true, false)
 }
 
-func TestReadLocalEmptyConfig(t *testing.T) {
+func (s *S) TestReadLocalEmptyConfig(c *check.C) {
 	// No matter if there are additional not recognized params, only known should be marshalled
 	f, err := createTempFile(testLocalEmptyConfig)
-	if err != nil {
-		t.Errorf("Temp file error: %v", err)
-	}
+	c.Assert(err, check.IsNil)
 
 	defer os.Remove(f.Name())
-
 	configFile = f.Name()
 
 	cfg, err := readLocalConfig()
-	if err != nil {
-		t.Errorf("Error reading local config file: %v", err)
-	}
+	c.Assert(err, check.IsNil)
 
-	verifyDefaultLocalConfig(t, cfg)
+	verifyDefaultLocalConfig(c, cfg)
 }
 
-func TestReadLocalNotExistingConfig(t *testing.T) {
+func (s *S) TestReadLocalNotExistingConfig(c *check.C) {
 	configFile = "does/not/exists/config.json"
 
 	cfg, err := readLocalConfig()
-	if err != nil {
-		t.Errorf("Error reading local config file: %v", err)
-	}
+	c.Assert(err, check.IsNil)
 
-	verifyDefaultLocalConfig(t, cfg)
+	verifyDefaultLocalConfig(c, cfg)
 }
 
-func TestWriteLocalConfigFileDoesNotExists(t *testing.T) {
+func (s *S) TestWriteLocalConfigFileDoesNotExists(c *check.C) {
 	mustConfigFlagFile = filepath.Join(os.TempDir(), "config_done"+randomName())
 	defer os.Remove(mustConfigFlagFile)
 	configFile = filepath.Join(os.TempDir(), "config"+randomName())
 	defer os.Remove(configFile)
 
-	if !MustSetConfig() {
-		t.Errorf("No configuration has been set yet but snap is not asking for it")
-	}
+	c.Assert(MustSetConfig(), check.Equals, true)
 
 	err := writeLocalConfig(testPortalConfig)
-	if err != nil {
-		t.Errorf("Error while writing local config to file: %v", err)
-	}
+	c.Assert(err, check.IsNil)
 
 	cfg, err := readLocalConfig()
-	if err != nil {
-		t.Errorf("Error reading local config file: %v", err)
-	}
+	c.Assert(err, check.IsNil)
 
-	if *cfg != *testPortalConfig {
-		t.Errorf("Got local config %v, but expected %v", cfg, testPortalConfig)
-	}
-
-	//verify must config flag file
-	if MustSetConfig() {
-		t.Errorf("Configuration has been set but snap is still asking for it")
-	}
+	c.Assert(*cfg, check.Equals, *testPortalConfig)
+	c.Assert(MustSetConfig(), check.Equals, false)
 }
 
-func TestWriteLocalConfigFiletExists(t *testing.T) {
+func (s *S) TestWriteLocalConfigFiletExists(c *check.C) {
 	mustConfigFlagFile = filepath.Join(os.TempDir(), "config_done"+randomName())
 	defer os.Remove(mustConfigFlagFile)
 
 	f, err := createTempFile(testLocalConfigBadEntry)
-	if err != nil {
-		t.Errorf("Temp file error: %v", err)
-	}
+	c.Assert(err, check.IsNil)
 
 	defer os.Remove(f.Name())
-
 	configFile = f.Name()
 
-	if !MustSetConfig() {
-		t.Errorf("No configuration has been set yet but snap is not asking for it")
-	}
+	c.Assert(MustSetConfig(), check.Equals, true)
 
 	err = writeLocalConfig(testPortalConfig)
-	if err != nil {
-		t.Errorf("Error while writing local config to file: %v", err)
-	}
+	c.Assert(err, check.IsNil)
 
 	cfg, err := readLocalConfig()
-	if err != nil {
-		t.Errorf("Error reading local config file: %v", err)
-	}
+	c.Assert(err, check.IsNil)
 
-	if *cfg != *testPortalConfig {
-		t.Errorf("Got local config %v, but expected %v", cfg, testPortalConfig)
-	}
-
-	if MustSetConfig() {
-		t.Errorf("Configuration has been set but snap is still asking for it")
-	}
+	c.Assert(*cfg, check.Equals, *testPortalConfig)
+	c.Assert(MustSetConfig(), check.Equals, false)
 }
 
-func TestMustSetConfig(t *testing.T) {
+func (s *S) TestMustSetConfig(c *check.C) {
 	mustConfigFlagFile = filepath.Join(os.TempDir(), "config_done"+randomName())
 	defer os.Remove(mustConfigFlagFile)
 	configFile = filepath.Join(os.TempDir(), "config"+randomName())
 	defer os.Remove(configFile)
 
-	if !MustSetConfig() {
-		t.Errorf("No configuration has been set yet but snap is not asking for it")
-	}
+	c.Assert(MustSetConfig(), check.Equals, true)
 
 	err := writeLocalConfig(testPortalConfig)
-	if err != nil {
-		t.Errorf("Error while writing local config to file: %v", err)
-	}
+	c.Assert(err, check.IsNil)
 
-	//verify must config flag file
-	if MustSetConfig() {
-		t.Errorf("Configuration has been set but snap is still asking for it")
-	}
+	c.Assert(MustSetConfig(), check.Equals, false)
 
 	err = writeLocalConfig(testPortalConfig)
-	if err != nil {
-		t.Errorf("Error while writing local config to file: %v", err)
-	}
+	c.Assert(err, check.IsNil)
 
-	//verify must config flag file has not changed
-	if MustSetConfig() {
-		t.Errorf("Configuration has been set but snap is still asking for it")
-	}
+	c.Assert(MustSetConfig(), check.Equals, false)
 }
 
 type wifiapClientMock struct {
@@ -283,7 +228,7 @@ func (c *wifiapClientMock) Set(map[string]interface{}) error {
 	return nil
 }
 
-func TestReadRemoteConfig(t *testing.T) {
+func (s *S) TestReadRemoteConfig(c *check.C) {
 	wifiapClient = &wifiapClientMock{
 		m: map[string]interface{}{
 			"dhcp.lease-time":          "12h",
@@ -307,9 +252,7 @@ func TestReadRemoteConfig(t *testing.T) {
 	}
 
 	cfg, err := readRemoteConfig()
-	if err != nil {
-		t.Errorf("Error fetching remote config: %v", err)
-	}
+	c.Assert(err, check.IsNil)
 
 	expectedCfg := &WifiConfig{
 		Ssid:          "Ubuntu",
@@ -320,12 +263,10 @@ func TestReadRemoteConfig(t *testing.T) {
 		OperationMode: "g",
 	}
 
-	if *cfg != *expectedCfg {
-		t.Errorf("Got remote config is %v, but expected %v", cfg, expectedCfg)
-	}
+	c.Assert(*cfg, check.Equals, *expectedCfg)
 }
 
-func TestReadRemoteConfigNotAllParams(t *testing.T) {
+func (s *S) TestReadRemoteConfigNotAllParams(c *check.C) {
 	wifiapClient = &wifiapClientMock{
 		m: map[string]interface{}{
 			"dhcp.lease-time":         "12h",
@@ -345,9 +286,7 @@ func TestReadRemoteConfigNotAllParams(t *testing.T) {
 	}
 
 	cfg, err := readRemoteConfig()
-	if err != nil {
-		t.Errorf("Error fetching remote config: %v", err)
-	}
+	c.Assert(err, check.IsNil)
 
 	expectedCfg := &WifiConfig{
 		Ssid:          "Ubuntu",
@@ -358,18 +297,14 @@ func TestReadRemoteConfigNotAllParams(t *testing.T) {
 		OperationMode: "",
 	}
 
-	if *cfg != *expectedCfg {
-		t.Errorf("Got remote config is %v, but expected %v", cfg, expectedCfg)
-	}
+	c.Assert(*cfg, check.Equals, *expectedCfg)
 }
 
-func TestReadEmptyRemoteConfig(t *testing.T) {
+func (s *S) TestReadEmptyRemoteConfig(c *check.C) {
 	wifiapClient = &wifiapClientMock{}
 
 	cfg, err := readRemoteConfig()
-	if err != nil {
-		t.Errorf("Error fetching remote config: %v", err)
-	}
+	c.Assert(err, check.IsNil)
 
 	expectedCfg := &WifiConfig{
 		Ssid:          "",
@@ -380,12 +315,10 @@ func TestReadEmptyRemoteConfig(t *testing.T) {
 		OperationMode: "",
 	}
 
-	if *cfg != *expectedCfg {
-		t.Errorf("Got remote config is %v, but expected %v", cfg, expectedCfg)
-	}
+	c.Assert(*cfg, check.Equals, *expectedCfg)
 }
 
-func TestWriteRemoteConfig(t *testing.T) {
+func (s *S) TestWriteRemoteConfig(c *check.C) {
 	wifiapClient = &wifiapClientMock{}
 
 	err := writeRemoteConfig(&WifiConfig{
@@ -397,12 +330,10 @@ func TestWriteRemoteConfig(t *testing.T) {
 		OperationMode: "g",
 	})
 
-	if err != nil {
-		t.Errorf("Error writing remote config: %v", err)
-	}
+	c.Assert(err, check.IsNil)
 }
 
-func TestWriteConfig(t *testing.T) {
+func (s *S) TestWriteConfig(c *check.C) {
 	wifiapClient = &wifiapClientMock{}
 
 	configFile = filepath.Join(os.TempDir(), "config"+randomName())
@@ -411,9 +342,7 @@ func TestWriteConfig(t *testing.T) {
 	mustConfigFlagFile = filepath.Join(os.TempDir(), "config_done"+randomName())
 	defer os.Remove(mustConfigFlagFile)
 
-	if !MustSetConfig() {
-		t.Errorf("No configuration has been set yet but snap is not asking for it")
-	}
+	c.Assert(MustSetConfig(), check.Equals, true)
 
 	err := WriteConfig(&Config{
 		Wifi: &WifiConfig{
@@ -431,15 +360,57 @@ func TestWriteConfig(t *testing.T) {
 		},
 	})
 
-	if err != nil {
-		t.Errorf("Error writing configuration: %v", err)
-	}
+	c.Assert(err, check.IsNil)
 
-	if MustSetConfig() {
-		t.Errorf("Configuration has been set but snap is still asking for it")
-	}
+	c.Assert(MustSetConfig(), check.Equals, false)
 }
 
-func TestReadConfig(t *testing.T) {
+func (s *S) TestReadConfig(c *check.C) {
+	wifiapClient = &wifiapClientMock{
+		m: map[string]interface{}{
+			"dhcp.lease-time":          "12h",
+			"dhcp.range-start":         "10.0.60.2",
+			"dhcp.range-stop":          "10.0.60.199",
+			"disabled":                 true,
+			"share.disabled":           false,
+			"share.network-interface":  "wlp2s0",
+			"wifi.address":             "10.0.60.1",
+			"wifi.channel":             6,
+			"wifi.hostapd-driver":      "nl80211",
+			"wifi.interface":           "wlp2s0",
+			"wifi.interface-mode":      "direct",
+			"wifi.country-code":        "0x31",
+			"wifi.netmask":             "255.255.255.0",
+			"wifi.operation-mode":      "g",
+			"wifi.security":            "wpa2",
+			"wifi.security-passphrase": "17Soj8/Sxh14lcpD",
+			"wifi.ssid":                "Ubuntu",
+		},
+	}
 
+	f, err := createTempFile(testLocalConfig)
+	c.Assert(err, check.IsNil)
+
+	defer os.Remove(f.Name())
+	configFile = f.Name()
+
+	expectedWifiConfig := &WifiConfig{
+		Ssid:          "Ubuntu",
+		Passphrase:    "17Soj8/Sxh14lcpD",
+		Interface:     "wlp2s0",
+		CountryCode:   "0x31",
+		Channel:       6,
+		OperationMode: "g",
+	}
+
+	expectedPortalConfig := &PortalConfig{
+		Password:           "the_password",
+		NoResetCredentials: true,
+		NoOperational:      false,
+	}
+
+	cfg, err := ReadConfig()
+	c.Assert(err, check.IsNil)
+	c.Assert(*cfg.Wifi, check.Equals, *expectedWifiConfig)
+	c.Assert(*cfg.Portal, check.Equals, *expectedPortalConfig)
 }
