@@ -192,7 +192,7 @@ func TestSetDefaults(t *testing.T) {
 	expectedPassphrase := "abcdefghijklmnop"
 	expectedPassword := "qwerzxcv"
 	if config.Passphrase != expectedPassphrase {
-		t.Errorf("SetDefaults: Preconfig passphrase should be %d but is %d", expectedPassphrase, config.Passphrase)
+		t.Errorf("SetDefaults: Preconfig passphrase should be %s but is %s", expectedPassphrase, config.Passphrase)
 	}
 	if os.IsNotExist(err) {
 		t.Errorf("SetDefaults should have created %s but did not", hfp)
@@ -220,7 +220,7 @@ func TestSetDefaults(t *testing.T) {
 	client.SetDefaults(&mockWifiap{})
 	config = client.GetConfig()
 	if len(config.Passphrase) > 0 {
-		t.Errorf("SetDefaults: Preconfig passphrase was not set but is", config.Passphrase)
+		t.Errorf("SetDefaults: Preconfig passphrase was not set but is %s", config.Passphrase)
 	}
 	res2, _ := utils.MatchingHash(expectedPassword)
 	if res2 {
