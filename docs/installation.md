@@ -1,5 +1,5 @@
 ---
-title: "Intallation"
+title: "Installation"
 table_of_contents: True
 ---
 

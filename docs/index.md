@@ -10,7 +10,7 @@ The wifi-connect snap allows you to connect your device to an external Wi-Fi acc
 Wifi-connect is appropriate for simple use cases where there is no other control of networking. Wifi-connect has a daemon that takes over networking and controls device state automatically:
 
  * When there is no external AP connection, wifi-connect starts its own AP and the Management web page (which allows you to select and join external WiFI APs)
- * When there is an external AP connection, wifi-connect ensures its own AP is down and puts of the Operational web page (which allows you to disconnect from the external AP) 
+ * When there is an external AP connection, wifi-connect ensures its own AP is down and puts up the Operational web page (which allows you to disconnect from the external AP) 
 
 Wifi-connect uses two other snaps:
 
