@@ -98,17 +98,6 @@ func TestManualMode(t *testing.T) {
 	}
 }
 
-/*
-// Operations interface defining operations implemented by wifiap client
-type wifiapInterface interface {
-	Show() (map[string]interface{}, error)
-	Enabled() (bool, error)
-	Enable() error
-	Disable() error
-	SetSsid(string) error
-	SetPassphrase(string) error
-}
-*/
 type mockWifiap struct{}
 
 //var wifiapClient wifiapInterface
