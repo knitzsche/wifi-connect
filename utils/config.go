@@ -136,7 +136,7 @@ func writeRemoteConfig(wc *WifiConfig) error {
 }
 
 // ReadConfig reads all config, remote and local, at the same time
-func ReadConfig() (*Config, error) {
+var ReadConfig = func() (*Config, error) {
 	wifiConfig, err := readRemoteConfig()
 	if err != nil {
 		return nil, err
@@ -151,7 +151,7 @@ func ReadConfig() (*Config, error) {
 }
 
 // WriteConfig writes all remote and local config at the same time
-func WriteConfig(c *Config) error {
+var WriteConfig = func(c *Config) error {
 	err := writeLocalConfig(c.Portal)
 	if err == nil {
 		err = writeRemoteConfig(c.Wifi)
@@ -161,7 +161,7 @@ func WriteConfig(c *Config) error {
 }
 
 // MustSetConfig true if one needs to configure snap before continuing
-func MustSetConfig() bool {
+var MustSetConfig = func() bool {
 	if _, err := os.Stat(mustConfigFlagFile); os.IsNotExist(err) {
 		return true
 	}

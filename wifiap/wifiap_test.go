@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"reflect"
 	"strings"
 	"testing"
 )
@@ -160,9 +161,20 @@ func validateHeaders(m map[string]interface{}, req *http.Request) error {
 		return fmt.Errorf("Expected %v headers", n)
 	}
 
-	for key, value := range m {
-		if headers[key] != value {
-			return fmt.Errorf("Header '%v' has not valid value", key)
+	for key, mValue := range m {
+		hValue := headers[key]
+		if hValue != mValue {
+			// evaluate the special case of hValue unmarshalled as float64
+			if reflect.TypeOf(hValue) != reflect.TypeOf(mValue) {
+				switch hValue := hValue.(type) {
+				case float64:
+					if int(hValue) != mValue.(int) {
+						return fmt.Errorf("Header '%v' has not valid value. Expected %v but has %v", key, mValue, hValue)
+					}
+				}
+			} else {
+				return fmt.Errorf("Header '%v' has not valid value. Expected %v but has %v", key, mValue, hValue)
+			}
 		}
 	}
 

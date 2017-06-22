@@ -439,3 +439,7 @@ func TestWriteConfig(t *testing.T) {
 		t.Errorf("Configuration has been set but snap is still asking for it")
 	}
 }
+
+func TestReadConfig(t *testing.T) {
+
+}
