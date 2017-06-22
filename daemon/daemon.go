@@ -208,15 +208,26 @@ func (c *Client) OperationalServerDown() {
 	}
 }
 
+// SetPreConfigFile is used only for unit tests to set the json file in which the
+// preconfig normally obtained from the configure hook are stored
+func (c *Client) SetPreConfigFile(path string) {
+	PreConfigFile = path
+}
+
 // GetConfig returns the preconfiguration that may have been done via snap set
 func (c *Client) GetConfig() *PreConfig {
 	return &Config
 }
 
+// NewConfig makes a new preconfiguration - use ONLY for testing
+func (c *Client) NewConfig() {
+	Config = PreConfig{}
+}
+
 // SetDefaults checks if there is a configuration file, and if so it applies the configuration,
 // returning true, nil on success, true, error on failure. If there is no configuration file,
 // false, error is returned.
-func (c *Client) SetDefaults() (bool, error) {
+func (c *Client) SetDefaults(cw wifiap.Wifiaper) (bool, error) {
 	content, errR := ioutil.ReadFile(PreConfigFile)
 	if errR != nil {
 		return true, err
@@ -225,7 +236,6 @@ func (c *Client) SetDefaults() (bool, error) {
 	if errJ != nil {
 		return true, errJ
 	}
-	cw := wifiap.DefaultClient()
 	ap, errShow := cw.Show()
 	if errShow != nil {
 		fmt.Println("== wifi-connect/daemon/SetDefaults: wifi-ap.Show err:", errShow)
@@ -236,6 +246,7 @@ func (c *Client) SetDefaults() (bool, error) {
 			fmt.Println("== wifi-connect/SetDefaults wifi-ap passphrase being set")
 			if err != nil {
 				fmt.Println("== wifi-connect/daemon/SetDefaults: passphrase err:", err)
+				return true, err
 			}
 		}
 	}
@@ -244,6 +255,7 @@ func (c *Client) SetDefaults() (bool, error) {
 		_, err := utils.HashIt(Config.Password)
 		if err != nil {
 			fmt.Println("== wifi-connect/daemon/SetDefaults: password err:", err)
+			return true, err
 		}
 	}
 	if Config.NoOperational {
