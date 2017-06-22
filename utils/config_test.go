@@ -155,12 +155,18 @@ func TestReadLocalNotExistingConfig(t *testing.T) {
 }
 
 func TestWriteLocalConfigFileDoesNotExists(t *testing.T) {
+	mustConfigFlagFile = filepath.Join(os.TempDir(), "config_done"+randomName())
+	defer os.Remove(mustConfigFlagFile)
 	configFile = filepath.Join(os.TempDir(), "config"+randomName())
 	defer os.Remove(configFile)
 
+	if !MustSetConfig() {
+		t.Errorf("No configuration has been set yet but snap is not asking for it")
+	}
+
 	err := writeLocalConfig(testPortalConfig)
 	if err != nil {
-		t.Errorf("Error while writting local config to file: %v", err)
+		t.Errorf("Error while writing local config to file: %v", err)
 	}
 
 	cfg, err := readLocalConfig()
@@ -171,9 +177,17 @@ func TestWriteLocalConfigFileDoesNotExists(t *testing.T) {
 	if *cfg != *testPortalConfig {
 		t.Errorf("Got local config %v, but expected %v", cfg, testPortalConfig)
 	}
+
+	//verify must config flag file
+	if MustSetConfig() {
+		t.Errorf("Configuration has been set but snap is still asking for it")
+	}
 }
 
 func TestWriteLocalConfigFiletExists(t *testing.T) {
+	mustConfigFlagFile = filepath.Join(os.TempDir(), "config_done"+randomName())
+	defer os.Remove(mustConfigFlagFile)
+
 	f, err := createTempFile(testLocalConfigBadEntry)
 	if err != nil {
 		t.Errorf("Temp file error: %v", err)
@@ -183,9 +197,13 @@ func TestWriteLocalConfigFiletExists(t *testing.T) {
 
 	configFile = f.Name()
 
+	if !MustSetConfig() {
+		t.Errorf("No configuration has been set yet but snap is not asking for it")
+	}
+
 	err = writeLocalConfig(testPortalConfig)
 	if err != nil {
-		t.Errorf("Error while writting local config to file: %v", err)
+		t.Errorf("Error while writing local config to file: %v", err)
 	}
 
 	cfg, err := readLocalConfig()
@@ -195,6 +213,41 @@ func TestWriteLocalConfigFiletExists(t *testing.T) {
 
 	if *cfg != *testPortalConfig {
 		t.Errorf("Got local config %v, but expected %v", cfg, testPortalConfig)
+	}
+
+	if MustSetConfig() {
+		t.Errorf("Configuration has been set but snap is still asking for it")
+	}
+}
+
+func TestMustSetConfig(t *testing.T) {
+	mustConfigFlagFile = filepath.Join(os.TempDir(), "config_done"+randomName())
+	defer os.Remove(mustConfigFlagFile)
+	configFile = filepath.Join(os.TempDir(), "config"+randomName())
+	defer os.Remove(configFile)
+
+	if !MustSetConfig() {
+		t.Errorf("No configuration has been set yet but snap is not asking for it")
+	}
+
+	err := writeLocalConfig(testPortalConfig)
+	if err != nil {
+		t.Errorf("Error while writing local config to file: %v", err)
+	}
+
+	//verify must config flag file
+	if MustSetConfig() {
+		t.Errorf("Configuration has been set but snap is still asking for it")
+	}
+
+	err = writeLocalConfig(testPortalConfig)
+	if err != nil {
+		t.Errorf("Error while writing local config to file: %v", err)
+	}
+
+	//verify must config flag file has not changed
+	if MustSetConfig() {
+		t.Errorf("Configuration has been set but snap is still asking for it")
 	}
 }
 
@@ -355,6 +408,13 @@ func TestWriteConfig(t *testing.T) {
 	configFile = filepath.Join(os.TempDir(), "config"+randomName())
 	defer os.Remove(configFile)
 
+	mustConfigFlagFile = filepath.Join(os.TempDir(), "config_done"+randomName())
+	defer os.Remove(mustConfigFlagFile)
+
+	if !MustSetConfig() {
+		t.Errorf("No configuration has been set yet but snap is not asking for it")
+	}
+
 	err := WriteConfig(&Config{
 		Wifi: &WifiConfig{
 			Ssid:          "Ubuntu",
@@ -373,5 +433,9 @@ func TestWriteConfig(t *testing.T) {
 
 	if err != nil {
 		t.Errorf("Error writing configuration: %v", err)
+	}
+
+	if MustSetConfig() {
+		t.Errorf("Configuration has been set but snap is still asking for it")
 	}
 }

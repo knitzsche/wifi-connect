@@ -13,6 +13,7 @@ import (
 )
 
 var configFile = filepath.Join(os.Getenv("SNAP_COMMON"), "config.json")
+var mustConfigFlagFile = filepath.Join(os.Getenv("SNAP_COMMON"), ".config_done.flag")
 
 var wifiapClient wifiap.Operations
 
@@ -78,6 +79,14 @@ func writeLocalConfig(p *PortalConfig) error {
 	err = ioutil.WriteFile(configFile, bytes, 0644)
 	if err != nil {
 		return fmt.Errorf("Could not write local config to file: %v", err)
+	}
+
+	// write flag file for not asking more times for configuring snap before first use
+	if MustSetConfig() {
+		err = WriteFlagFile(mustConfigFlagFile)
+		if err != nil {
+			return fmt.Errorf("Error writing flag file after configuring for a first time")
+		}
 	}
 
 	return nil
@@ -149,4 +158,12 @@ func WriteConfig(c *Config) error {
 	}
 
 	return err
+}
+
+// MustSetConfig true if one needs to configure snap before continuing
+func MustSetConfig() bool {
+	if _, err := os.Stat(mustConfigFlagFile); os.IsNotExist(err) {
+		return true
+	}
+	return false
 }

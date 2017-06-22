@@ -85,8 +85,8 @@ func execTemplate(w http.ResponseWriter, templatePath string, data Data) {
 	}
 }
 
-// firstConfigHandler manages first configuration parameters set
-func firstConfigHandler(w http.ResponseWriter, r *http.Request) {
+// configHandler manages configuration parameters set
+func configHandler(w http.ResponseWriter, r *http.Request) {
 	// get current wifi-ap SSID and passphrase.
 	result, err := wifiapClient.Show()
 	if err != nil {
@@ -114,11 +114,14 @@ func firstConfigHandler(w http.ResponseWriter, r *http.Request) {
 
 // ManagementHandler lists the current available SSIDs
 func ManagementHandler(w http.ResponseWriter, r *http.Request) {
-	//TODO complete this condition with the preconfigured one for not show this ever:
-	// if this is the first time the portal is up, redirect to first config template
-	if _, err := os.Stat(firstConfigFlagFile); os.IsNotExist(err) {
-		firstConfigHandler(w, r)
+	config, err := utils.ReadConfig()
+	if err != nil {
+		log.Printf("Error reading configuration: %v\n", err)
 		return
+	}
+
+	if !config.Portal.NoResetCredentials && utils.MustSetConfig() {
+		configHandler(w, r)
 	}
 
 	// daemon stores current available ssids in a file
