@@ -18,7 +18,11 @@
 package daemon
 
 import (
+	"fmt"
+	"io/ioutil"
+	"net/http"
 	"os"
+	"strings"
 	"testing"
 
 	"launchpad.net/wifi-connect/utils"
@@ -94,8 +98,87 @@ func TestManualMode(t *testing.T) {
 	}
 }
 
+/*
+// Operations interface defining operations implemented by wifiap client
+type wifiapInterface interface {
+	Show() (map[string]interface{}, error)
+	Enabled() (bool, error)
+	Enable() error
+	Disable() error
+	SetSsid(string) error
+	SetPassphrase(string) error
+}
+*/
+type mockWifiap struct{}
+
+//var wifiapClient wifiapInterface
+
+func (mock *mockWifiap) Do(req *http.Request) (*http.Response, error) {
+	fmt.Println("==== MY do called")
+	url := req.URL.String()
+	if url != "http://unix/v1/configuration" {
+		return nil, fmt.Errorf("Not valid request URL: %v", url)
+	}
+
+	if req.Method != "GET" {
+		return nil, fmt.Errorf("Method is not valid. Expected GET, got %v", req.Method)
+	}
+
+	rawBody := `{"result":{
+		"debug":false, 
+		"dhcp.lease-time": "12h", 
+		"dhcp.range-start": "10.0.60.2", 
+		"dhcp.range-stop": "10.0.60.199", 
+		"disabled": true, 
+		"share.disabled": false, 
+		"share-network-interface": "tun0", 
+		"wifi-address": "10.0.60.1", 
+		"wifi.channel": "6", 
+		"wifi.hostapd-driver": "nl80211", 
+		"wifi.interface": "wlan0", 
+		"wifi.interface-mode": "direct", 
+		"wifi.netmask": "255.255.255.0", 
+		"wifi.operation-mode": "g", 
+		"wifi.security": "
+		"wifi.security-passphrase": "passphrase123", 
+		"wifi.ssid": "AP"},"status":"OK","status-code":200,""sync"}`
+
+	response := http.Response{
+		StatusCode: 200,
+		Status:     "200 OK",
+		Body:       ioutil.NopCloser(strings.NewReader(rawBody)),
+	}
+
+	return &response, nil
+}
+
+func (mock *mockWifiap) Show() (map[string]interface{}, error) {
+	wifiAp := make(map[string]interface{})
+	wifiAp["wifi.security-passphrase"] = "randompassphrase"
+	return wifiAp, nil
+}
+
+func (mock *mockWifiap) Enabled() (bool, error) {
+	return true, nil
+}
+
+func (mock *mockWifiap) Enable() error {
+	return nil
+}
+func (mock *mockWifiap) Disable() error {
+	return nil
+}
+func (mock *mockWifiap) SetSsid(s string) error {
+	return nil
+}
+
+func (mock *mockWifiap) SetPassphrase(p string) error {
+	return nil
+}
+
 func TestSetDefaults(t *testing.T) {
 	client := GetClient()
+	client.SetPreConfigFile("../static/tests/pre-config0.json")
 	hfp := "/tmp/hash"
 	if _, err := os.Stat(hfp); err == nil {
 		err = os.Remove(hfp)
@@ -104,34 +187,49 @@ func TestSetDefaults(t *testing.T) {
 		}
 	}
 	utils.SetHashFile(hfp)
-	client.SetDefaults()
-	_, err := os.Stat(utils.HashFile)
+	client.SetDefaults(&mockWifiap{})
+	config := client.GetConfig()
+	expectedPassphrase := "abcdefghijklmnop"
+	expectedPassword := "qwerzxcv"
+	if config.Passphrase != expectedPassphrase {
+		t.Errorf("SetDefaults: Preconfig passphrase should be %d but is %d", expectedPassphrase, config.Passphrase)
+	}
 	if os.IsNotExist(err) {
 		t.Errorf("SetDefaults should have created %s but did not", hfp)
 	}
-	res, _ := utils.MatchingHash("wifi-connect")
+	res, _ := utils.MatchingHash(expectedPassword)
 	if !res {
-		t.Errorf("SetDefaults password match did not match")
+		t.Errorf("SetDefaults: Preconfig password hash did not match actual")
 	}
-}
+	if !config.NoOperational {
+		t.Errorf("SetDefaults: Preconfig portal.no-operational should be true (set) but is %t", config.NoOperational)
+	}
+	if !config.NoResetCreds {
+		t.Errorf("SetDefaults: Preconfig portal.no-reset-creds should be true (set) but is %t", config.NoResetCreds)
+	}
 
-func TestSetDefaultsAlreadyExistsHashFile(t *testing.T) {
-	client := GetClient()
-	hfp := "/tmp/hash"
-	// create file if not exists
-	if _, err := os.Stat(utils.HashFile); os.IsNotExist(err) {
-		if _, err = os.OpenFile(hfp, os.O_CREATE, 0666); err != nil {
-			t.Errorf("Error creating %v file", hfp)
+	if _, err := os.Stat(hfp); err == nil {
+		err = os.Remove(hfp)
+		if err != nil {
+			t.Errorf("Could not remove previous file version")
 		}
 	}
-	utils.SetHashFile(hfp)
-	client.SetDefaults()
-	_, err := os.Stat(utils.HashFile)
-	if os.IsNotExist(err) {
-		t.Errorf("SetDefaults should have created %s but did not", hfp)
+	client.SetPreConfigFile("../static/tests/pre-config1.json")
+	client.NewConfig()
+	client.SetDefaults(&mockWifiap{})
+	client.SetDefaults(&mockWifiap{})
+	config = client.GetConfig()
+	if len(config.Passphrase) > 0 {
+		t.Errorf("SetDefaults: Preconfig passphrase was not set but is", config.Passphrase)
 	}
-	res, _ := utils.MatchingHash("wifi-connect")
-	if !res {
-		t.Errorf("SetDefaults password match did not match")
+	res2, _ := utils.MatchingHash(expectedPassword)
+	if res2 {
+		t.Errorf("SetDefaults: Preconfig password was not set, but the hash matched")
+	}
+	if config.NoOperational {
+		t.Errorf("SetDefaults: Preconfig portal.no-operational should be false (unset) but is %t", config.NoOperational)
+	}
+	if config.NoResetCreds {
+		t.Errorf("SetDefaults: Preconfig portal.no-reset-creds should be false (unnset) but is %t", config.NoResetCreds)
 	}
 }
