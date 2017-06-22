@@ -40,6 +40,16 @@ func DefaultClient() *Client {
 	return &Client{restClient: defaultRestClient()}
 }
 
+// Wifiaper interface enables mock testing
+type Wifiaper interface {
+	Show() (map[string]interface{}, error)
+	Enabled() (bool, error)
+	Enable() error
+	Disable() error
+	SetSsid(string) error
+	SetPassphrase(string) error
+}
+
 func defaultServiceURI() string {
 	return fmt.Sprintf("http://unix%s", filepath.Join(versionURI, configurationURI))
 }
