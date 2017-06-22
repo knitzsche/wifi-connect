@@ -46,6 +46,9 @@ type S struct{}
 
 var _ = check.Suite(&S{})
 
+// ####################
+// Testing local config
+// ####################
 func randomName() string {
 	randmu.Lock()
 	r := rand
@@ -196,6 +199,9 @@ func (s *S) TestMustSetConfig(c *check.C) {
 	c.Assert(MustSetConfig(), check.Equals, false)
 }
 
+// #####################
+// Testing remote config
+// #####################
 type wifiapClientMock struct {
 	m map[string]interface{}
 }
@@ -333,6 +339,9 @@ func (s *S) TestWriteRemoteConfig(c *check.C) {
 	c.Assert(err, check.IsNil)
 }
 
+// ####################
+// Testing whole config
+// ####################
 func (s *S) TestWriteConfig(c *check.C) {
 	wifiapClient = &wifiapClientMock{}
 
