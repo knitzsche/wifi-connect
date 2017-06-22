@@ -56,6 +56,10 @@ func (c *wifiapClientMock) SetPassphrase(string) error {
 	return nil
 }
 
+func (c *wifiapClientMock) Set(map[string]interface{}) error {
+	return nil
+}
+
 type netmanClientMock struct{}
 
 func (c *netmanClientMock) GetDevices() []string {

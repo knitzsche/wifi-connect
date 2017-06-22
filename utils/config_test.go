@@ -88,7 +88,6 @@ func verifyDefaultLocalConfig(t *testing.T, cfg *PortalConfig) {
 }
 
 func TestReadLocalConfig(t *testing.T) {
-
 	f, err := createTempFile(testLocalConfig)
 	if err != nil {
 		t.Errorf("Temp file error: %v", err)
@@ -107,7 +106,6 @@ func TestReadLocalConfig(t *testing.T) {
 }
 
 func TestReadLocalConfigBadEntry(t *testing.T) {
-
 	// No matter if there are additional not recognized params, only known should be marshalled
 	f, err := createTempFile(testLocalConfigBadEntry)
 	if err != nil {
@@ -127,7 +125,6 @@ func TestReadLocalConfigBadEntry(t *testing.T) {
 }
 
 func TestReadLocalEmptyConfig(t *testing.T) {
-
 	// No matter if there are additional not recognized params, only known should be marshalled
 	f, err := createTempFile(testLocalEmptyConfig)
 	if err != nil {
@@ -147,7 +144,6 @@ func TestReadLocalEmptyConfig(t *testing.T) {
 }
 
 func TestReadLocalNotExistingConfig(t *testing.T) {
-
 	configFile = "does/not/exists/config.json"
 
 	cfg, err := readLocalConfig()
@@ -159,7 +155,6 @@ func TestReadLocalNotExistingConfig(t *testing.T) {
 }
 
 func TestWriteLocalConfigFileDoesNotExists(t *testing.T) {
-
 	configFile = filepath.Join(os.TempDir(), "config"+randomName())
 	defer os.Remove(configFile)
 
@@ -179,7 +174,6 @@ func TestWriteLocalConfigFileDoesNotExists(t *testing.T) {
 }
 
 func TestWriteLocalConfigFiletExists(t *testing.T) {
-
 	f, err := createTempFile(testLocalConfigBadEntry)
 	if err != nil {
 		t.Errorf("Temp file error: %v", err)
@@ -201,5 +195,183 @@ func TestWriteLocalConfigFiletExists(t *testing.T) {
 
 	if *cfg != *testPortalConfig {
 		t.Errorf("Got local config %v, but expected %v", cfg, testPortalConfig)
+	}
+}
+
+type wifiapClientMock struct {
+	m map[string]interface{}
+}
+
+func (c *wifiapClientMock) Show() (map[string]interface{}, error) {
+	return c.m, nil
+}
+
+func (c *wifiapClientMock) Enable() error {
+	return nil
+}
+
+func (c *wifiapClientMock) Disable() error {
+	return nil
+}
+
+func (c *wifiapClientMock) Enabled() (bool, error) {
+	return true, nil
+}
+
+func (c *wifiapClientMock) SetSsid(string) error {
+	return nil
+}
+
+func (c *wifiapClientMock) SetPassphrase(string) error {
+	return nil
+}
+
+func (c *wifiapClientMock) Set(map[string]interface{}) error {
+	return nil
+}
+
+func TestReadRemoteConfig(t *testing.T) {
+	wifiapClient = &wifiapClientMock{
+		m: map[string]interface{}{
+			"dhcp.lease-time":          "12h",
+			"dhcp.range-start":         "10.0.60.2",
+			"dhcp.range-stop":          "10.0.60.199",
+			"disabled":                 true,
+			"share.disabled":           false,
+			"share.network-interface":  "wlp2s0",
+			"wifi.address":             "10.0.60.1",
+			"wifi.channel":             6,
+			"wifi.hostapd-driver":      "nl80211",
+			"wifi.interface":           "wlp2s0",
+			"wifi.interface-mode":      "direct",
+			"wifi.country-code":        "0x31",
+			"wifi.netmask":             "255.255.255.0",
+			"wifi.operation-mode":      "g",
+			"wifi.security":            "wpa2",
+			"wifi.security-passphrase": "17Soj8/Sxh14lcpD",
+			"wifi.ssid":                "Ubuntu",
+		},
+	}
+
+	cfg, err := readRemoteConfig()
+	if err != nil {
+		t.Errorf("Error fetching remote config: %v", err)
+	}
+
+	expectedCfg := &WifiConfig{
+		Ssid:          "Ubuntu",
+		Passphrase:    "17Soj8/Sxh14lcpD",
+		Interface:     "wlp2s0",
+		CountryCode:   "0x31",
+		Channel:       6,
+		OperationMode: "g",
+	}
+
+	if *cfg != *expectedCfg {
+		t.Errorf("Got remote config is %v, but expected %v", cfg, expectedCfg)
+	}
+}
+
+func TestReadRemoteConfigNotAllParams(t *testing.T) {
+	wifiapClient = &wifiapClientMock{
+		m: map[string]interface{}{
+			"dhcp.lease-time":         "12h",
+			"dhcp.range-start":        "10.0.60.2",
+			"dhcp.range-stop":         "10.0.60.199",
+			"share.disabled":          false,
+			"share.network-interface": "wlp2s0",
+			"wifi.address":            "10.0.60.1",
+			"wifi.hostapd-driver":     "nl80211",
+			"wifi.interface":          "wlp2s0",
+			"wifi.interface-mode":     "direct",
+			"wifi.country-code":       "0x31",
+			"wifi.netmask":            "255.255.255.0",
+			"wifi.security":           "wpa2",
+			"wifi.ssid":               "Ubuntu",
+		},
+	}
+
+	cfg, err := readRemoteConfig()
+	if err != nil {
+		t.Errorf("Error fetching remote config: %v", err)
+	}
+
+	expectedCfg := &WifiConfig{
+		Ssid:          "Ubuntu",
+		Passphrase:    "",
+		Interface:     "wlp2s0",
+		CountryCode:   "0x31",
+		Channel:       0,
+		OperationMode: "",
+	}
+
+	if *cfg != *expectedCfg {
+		t.Errorf("Got remote config is %v, but expected %v", cfg, expectedCfg)
+	}
+}
+
+func TestReadEmptyRemoteConfig(t *testing.T) {
+	wifiapClient = &wifiapClientMock{}
+
+	cfg, err := readRemoteConfig()
+	if err != nil {
+		t.Errorf("Error fetching remote config: %v", err)
+	}
+
+	expectedCfg := &WifiConfig{
+		Ssid:          "",
+		Passphrase:    "",
+		Interface:     "",
+		CountryCode:   "",
+		Channel:       0,
+		OperationMode: "",
+	}
+
+	if *cfg != *expectedCfg {
+		t.Errorf("Got remote config is %v, but expected %v", cfg, expectedCfg)
+	}
+}
+
+func TestWriteRemoteConfig(t *testing.T) {
+	wifiapClient = &wifiapClientMock{}
+
+	err := writeRemoteConfig(&WifiConfig{
+		Ssid:          "Ubuntu",
+		Passphrase:    "17Soj8/Sxh14lcpD",
+		Interface:     "wlp2s0",
+		CountryCode:   "0x31",
+		Channel:       6,
+		OperationMode: "g",
+	})
+
+	if err != nil {
+		t.Errorf("Error writing remote config: %v", err)
+	}
+}
+
+func TestWriteConfig(t *testing.T) {
+	wifiapClient = &wifiapClientMock{}
+
+	configFile = filepath.Join(os.TempDir(), "config"+randomName())
+	defer os.Remove(configFile)
+
+	err := WriteConfig(&Config{
+		Wifi: &WifiConfig{
+			Ssid:          "Ubuntu",
+			Passphrase:    "17Soj8/Sxh14lcpD",
+			Interface:     "wlp2s0",
+			CountryCode:   "0x31",
+			Channel:       6,
+			OperationMode: "g",
+		},
+		Portal: &PortalConfig{
+			Password:           "the_password",
+			NoResetCredentials: true,
+			NoOperational:      false,
+		},
+	})
+
+	if err != nil {
+		t.Errorf("Error writing configuration: %v", err)
 	}
 }

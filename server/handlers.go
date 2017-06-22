@@ -87,10 +87,6 @@ func execTemplate(w http.ResponseWriter, templatePath string, data Data) {
 
 // firstConfigHandler manages first configuration parameters set
 func firstConfigHandler(w http.ResponseWriter, r *http.Request) {
-
-	//TODO TRACE
-	log.Println("FIRSTCONFIGHANDLER")
-
 	// get current wifi-ap SSID and passphrase.
 	result, err := wifiapClient.Show()
 	if err != nil {
@@ -118,7 +114,6 @@ func firstConfigHandler(w http.ResponseWriter, r *http.Request) {
 
 // ManagementHandler lists the current available SSIDs
 func ManagementHandler(w http.ResponseWriter, r *http.Request) {
-
 	//TODO complete this condition with the preconfigured one for not show this ever:
 	// if this is the first time the portal is up, redirect to first config template
 	if _, err := os.Stat(firstConfigFlagFile); os.IsNotExist(err) {
@@ -142,10 +137,6 @@ func ManagementHandler(w http.ResponseWriter, r *http.Request) {
 
 // ConnectHandler reads form got ssid and password and tries to connect to that network
 func ConnectHandler(w http.ResponseWriter, r *http.Request) {
-
-	//TODO TRACE
-	log.Println("CONNECTHANDLER")
-
 	r.ParseForm()
 
 	pwd := ""

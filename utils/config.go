@@ -27,7 +27,7 @@ type WifiConfig struct {
 	Ssid          string `json:"wifi.ssid"`
 	Passphrase    string `json:"wifi.security-passphrase"`
 	Interface     string `json:"wifi.interface"`
-	Regdomain     string `json:"wifi.regdomain"`
+	CountryCode   string `json:"wifi.country-code"`
 	Channel       int    `json:"wifi.channel"`
 	OperationMode string `json:"wifi.operation-mode"`
 }
@@ -50,7 +50,6 @@ func defaultPortalConfig() *PortalConfig {
 // config currently stored in local json file is completely storable in PortalConfig
 // If needed to scale, we could rewrite this method to support a more generic type
 func readLocalConfig() (*PortalConfig, error) {
-
 	if _, err := os.Stat(configFile); os.IsNotExist(err) {
 		log.Printf("Not found local config file at %v. Applying default local configuration", configFile)
 		return defaultPortalConfig(), nil
@@ -71,7 +70,6 @@ func readLocalConfig() (*PortalConfig, error) {
 }
 
 func writeLocalConfig(p *PortalConfig) error {
-
 	bytes, err := json.Marshal(p)
 	if err != nil {
 		return fmt.Errorf("Could not marshal local config to raw data: %v", err)
@@ -85,21 +83,47 @@ func writeLocalConfig(p *PortalConfig) error {
 	return nil
 }
 
-func readRemoteConfig() (*WifiConfig, error) {
+func readRemoteParam(m map[string]interface{}, key string, defaultValue interface{}) interface{} {
+	val, ok := m[key]
+	if !ok {
+		val = defaultValue
+		log.Printf("Warning: %v key was not found in remote config", key)
+	}
 
+	return val
+}
+
+func readRemoteConfig() (*WifiConfig, error) {
 	settings, err := wifiapClient.Show()
 	if err != nil {
 		return nil, fmt.Errorf("Error reading wifi-ap remote configuration: %v", err)
 	}
 
 	return &WifiConfig{
-		Ssid:          settings["wifi.ssid"].(string),
-		Passphrase:    settings["wifi.security-passphrase"].(string),
-		Interface:     settings["wifi.interface"].(string),
-		Regdomain:     settings["wifi.regdomain"].(string),
-		Channel:       settings["wifi.channel"].(int),
-		OperationMode: settings["wifi.operational-mode"].(string),
+		Ssid:          readRemoteParam(settings, "wifi.ssid", "").(string),
+		Passphrase:    readRemoteParam(settings, "wifi.security-passphrase", "").(string),
+		Interface:     readRemoteParam(settings, "wifi.interface", "").(string),
+		CountryCode:   readRemoteParam(settings, "wifi.country-code", "").(string),
+		Channel:       readRemoteParam(settings, "wifi.channel", 0).(int),
+		OperationMode: readRemoteParam(settings, "wifi.operation-mode", "").(string),
 	}, nil
+}
+
+func writeRemoteConfig(wc *WifiConfig) error {
+	params := make(map[string]interface{})
+	params["wifi.ssid"] = wc.Ssid
+	params["wifi.security-passphrase"] = wc.Passphrase
+	params["wifi.interface"] = wc.Interface
+	params["wifi.country-code"] = wc.CountryCode
+	params["wifi.channel"] = wc.Channel
+	params["wifi.operation-mode"] = wc.OperationMode
+
+	err := wifiapClient.Set(params)
+	if err != nil {
+		return fmt.Errorf("Error writing remote configuration: %v", err)
+	}
+
+	return nil
 }
 
 // ReadConfig reads all config, remote and local, at the same time
@@ -108,9 +132,21 @@ func ReadConfig() (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	portalConfig, err := readLocalConfig()
 	if err != nil {
 		return nil, err
 	}
+
 	return &Config{Wifi: wifiConfig, Portal: portalConfig}, nil
+}
+
+// WriteConfig writes all remote and local config at the same time
+func WriteConfig(c *Config) error {
+	err := writeLocalConfig(c.Portal)
+	if err == nil {
+		err = writeRemoteConfig(c.Wifi)
+	}
+
+	return err
 }
