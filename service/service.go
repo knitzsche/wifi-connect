@@ -29,8 +29,11 @@ import (
 )
 
 func main() {
+	c := netman.DefaultClient()
+	cw := wifiap.DefaultClient()
 	client := daemon.GetClient()
-	preconfigured, errP := client.SetDefaults()
+
+	preconfigured, errP := client.SetDefaults(cw)
 	if preconfigured {
 		fmt.Println("== wifi-connect/daemon: preconfiguration used")
 	}
@@ -41,9 +44,6 @@ func main() {
 	first := true
 	client.SetWaitFlagPath(os.Getenv("SNAP_COMMON") + "/startingApConnect")
 	client.SetManualFlagPath(os.Getenv("SNAP_COMMON") + "/manualMode")
-
-	c := netman.DefaultClient()
-	cw := wifiap.DefaultClient()
 
 	client.ManagementServerDown()
 	client.OperationalServerDown()
