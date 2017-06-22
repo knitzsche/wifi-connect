@@ -43,7 +43,7 @@ parts:
     install: |
       export GOPATH=$PWD/../go
       cd $GOPATH/src/launchpad.net/wifi-connect
-      #./run-checks all
+      ./run-checks all
       mkdir -p $SNAPCRAFT_PART_INSTALL/snap/hooks
       mv $SNAPCRAFT_PART_INSTALL/bin/hooks $SNAPCRAFT_PART_INSTALL/snap/hooks/configure
   assets:
