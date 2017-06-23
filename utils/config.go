@@ -165,12 +165,32 @@ var ReadConfig = func() (*Config, error) {
 
 // WriteConfig writes all remote and local config at the same time
 var WriteConfig = func(c *Config) error {
-	err := writeLocalConfig(c.Portal)
-	if err == nil {
-		err = writeRemoteConfig(c.Wifi)
+	// read local config and save it as backup. This will be written back
+	// in case saving remote config fails
+	localConfigBackup, err := readLocalConfig()
+	if err != nil {
+		return fmt.Errorf("Error reading current config before applying new one: %v", err)
 	}
 
-	return err
+	err = writeLocalConfig(c.Portal)
+	if err != nil {
+		// if an error happens writing local config there is no need to restore
+		// backup, as nothing has been writen
+		return err
+	}
+
+	err = writeRemoteConfig(c.Wifi)
+	if err != nil {
+		// restore backup
+		backupErr := writeLocalConfig(localConfigBackup)
+		if backupErr != nil {
+			return fmt.Errorf("Could not restore previous local configuration: %v", backupErr)
+		}
+		// return error after completing backup
+		return err
+	}
+
+	return nil
 }
 
 // MustSetConfig true if one needs to configure snap before continuing

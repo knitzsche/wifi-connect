@@ -153,3 +153,12 @@ func RunningOn(address string) bool {
 	}
 	return true
 }
+
+// ParseFormParamSingleValue extracts single value from a http post request
+func ParseFormParamSingleValue(form map[string][]string, key string) string {
+	vals := form[key]
+	if len(vals) > 0 {
+		return vals[0]
+	}
+	return ""
+}

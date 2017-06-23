@@ -87,13 +87,13 @@
                     <input type="text" id="ssid" required="required" value="{{.Config.Wifi.Ssid}}" placeholder="Enter SSID"/>
                     <div class="p-form-validation" id="passphrase_form">
                         <label for="passphrase">Passphrase:</label>
-                        <input class="p-form-validation__input" type="password" id="passphrase" required="required" onblur="validate_password(this.id)" value="{{.Config.Wifi.Passphrase}}" placeholder="Enter passphrase"/>
+                        <input class="p-form-validation__input" type="password" id="passphrase" required="required" onblur="validate_password(this.id, 13)" value="{{.Config.Wifi.Passphrase}}" placeholder="Enter passphrase"/>
                         <label for="passphrase_confirm">Confirm passphrase:</label>
-                        <input class="p-form-validation__input" type="password" id="passphrase_confirm" required="required" onblur="validate_password('passphrase')" placeholder="Confirm passphrase"/>
+                        <input class="p-form-validation__input" type="password" id="passphrase_confirm" required="required" onblur="validate_password('passphrase', 13)" placeholder="Confirm passphrase"/>
                     </div>
                     <div class="p-notification--negative cheshire" id="passphrase_error">
                         <p class="p-notification__response">
-                            <span class="p-notification__status">Error:</span> Passphrases don't match
+                            <span class="p-notification__status">Error:</span> <text id="passphrase_error_msg"></text>
                         </p>
                     </div>
                     <label for="interface">Interface:</label>
@@ -127,13 +127,13 @@
                     <h4>Portal</h4>
                     <div class="p-form-validation" id="portal_pwd_form">
                         <label for="portal_pwd">Portal password:</label>
-                        <input class="p-form-validation__input" type="password" id="portal_pwd" required="required" value="{{.Config.Portal.Password}}" onblur="validate_password(this.id)"/>
+                        <input class="p-form-validation__input" type="password" id="portal_pwd" required="required" value="{{.Config.Portal.Password}}" onblur="validate_password(this.id,8)"/>
                         <label for="portal_pwd_confirm">Confirm portal password:</label>
-                        <input class="p-form-validation__input" type="password" id="portal_pwd_confirm" required="required" onblur="validate_password('portal_pwd')"/>
+                        <input class="p-form-validation__input" type="password" id="portal_pwd_confirm" required="required" onblur="validate_password('portal_pwd',8)"/>
                     </div>
                     <div class="p-notification--negative cheshire" id="portal_pwd_error">
                         <p class="p-notification__response">
-                            <span class="p-notification__status">Error:</span> Passwords don't match
+                            <span class="p-notification__status">Error:</span> <text id="portal_pwd_error_msg"></text>
                         </p>
                     </div>
                     <label for="show_operational">Show operational portal:</label>
@@ -147,7 +147,7 @@
                         <span class="p-notification__status">Warning:</span>This takes down the device AP and disconnects you. Please reconnect in a minute or two
                     </p>
                     <br/>
-                    <button class="p-button--positive" onclick="do_submit()">Apply configuration</button>
+                    <button class="p-button--positive" onclick="saveConfig()">Apply configuration</button>
                 </div>
             </div>
             {{end}}
@@ -172,8 +172,20 @@
     $(document).ready(function() {
         $('#grid').css('display', 'none')
         $('#refreshingAlert').css('display', 'none')
-        $('select').find('option[value={{.Config.Wifi.Channel}}]').attr('selected', 'selected')
-        $('#show_operational').prop('checked', !{{.Config.Portal.NoOperational}})
+        
+        // enable submit password when enter is pressed for login div
+        $('#passphrasePage').keydown(function(event) {
+            if (event.keyCode == 13) {
+                authenticate()
+                return false;
+            }
+        });
+
+        {{if eq .Page "config"}}
+            // config specific actions
+            $('select').find('option[value={{.Config.Wifi.Channel}}]').attr('selected', 'selected')
+            $('#show_operational').prop('checked', !{{.Config.Portal.NoOperational}})
+        {{end}}
 	})
 	function showSsids() {
 	    $('#login').css('display', 'none'); 
@@ -204,6 +216,55 @@
 	        })
         }
 	}    
+    function saveConfig() {
+        if (!validate_password('passphrase', 13)) {
+            return
+        }
+        if (!validate_password('portal_pwd', 8)) {
+            return
+        }
+        $.ajax({
+            type: "POST",
+            url: "/config",
+            data: {
+                Ssid: $('#ssid').val(),
+                Passprase: $('#passphrase').val(),
+                Interface:$('#interface').val(),
+                CountryCode: $('#country_code').val(),
+                Channel: $('#channel').val(),
+                OperationMode: $('#operation_mode').val(),
+                PortalPassword: $('#portal_pwd').val(),
+                ShowOperational: $('#show_operational').is(":checked")
+            }
+        }).done(function (response) {
+            showSsids();
+        })
+    }
+    // function to confirm password, and confirmation are equals.
+    // tag param is the name of primary input field for password.
+    // n param is the min length to consider
+    function validate_password(tag, n) {
+        var pwd = document.getElementById(tag)
+        var pwd_confirm = document.getElementById(tag + '_confirm')
+        //validate length
+        if (pwd.value.length < n) {
+            $('#' + tag + "_form").addClass('is-error')
+            $('#' + tag + '_error_msg').text('Value is too short. Must have ' + n + ' characters at least')
+            $('#' + tag + '_error').css('display', 'block')
+            return false
+        }
+        //validate confirm password field matches original
+        if (pwd.value != pwd_confirm.value) {
+            $('#' + tag + "_form").addClass('is-error')
+            $('#' + tag + '_error_msg').text('Passwords don\'t match')
+            $('#' + tag + '_error').css('display', 'block')
+            return false
+        } 
+        // default
+        $('#' + tag + "_form").removeClass('is-error')
+        $('#' + tag + '_error').css('display', 'none')
+        return true
+    }
 </script>
 
 

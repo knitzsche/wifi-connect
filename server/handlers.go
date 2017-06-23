@@ -27,6 +27,8 @@ import (
 	"text/template"
 	"time"
 
+	"strconv"
+
 	"launchpad.net/wifi-connect/utils"
 )
 
@@ -112,6 +114,53 @@ func ManagementHandler(w http.ResponseWriter, r *http.Request) {
 
 	// parse template
 	execTemplate(w, managementTemplatePath, data)
+}
+
+// SaveConfigHandler saves config received as form post parameters
+func SaveConfigHandler(w http.ResponseWriter, r *http.Request) {
+
+	// read previous config
+	config, err := utils.ReadConfig()
+	if err != nil {
+		log.Printf("Error reading previous stored config: %v", err)
+		return
+	}
+
+	r.ParseForm()
+
+	config.Wifi.Ssid = utils.ParseFormParamSingleValue(r.Form, "Ssid")
+	config.Wifi.Passphrase = utils.ParseFormParamSingleValue(r.Form, "Passphrase")
+	config.Wifi.Interface = utils.ParseFormParamSingleValue(r.Form, "Interface")
+	config.Wifi.CountryCode = utils.ParseFormParamSingleValue(r.Form, "CountryCode")
+	config.Wifi.Channel, err = strconv.Atoi(utils.ParseFormParamSingleValue(r.Form, "Channel"))
+	if err != nil {
+		log.Printf("Error parsing channel form value: %v", err)
+		return
+	}
+	config.Wifi.OperationMode = utils.ParseFormParamSingleValue(r.Form, "OperationalMode")
+	config.Portal.Password = utils.ParseFormParamSingleValue(r.Form, "PortalPassword")
+	showOperational, err := strconv.ParseBool(utils.ParseFormParamSingleValue(r.Form, "ShowOperational"))
+	if err != nil {
+		log.Printf("Error parsing show operational form value: %v", err)
+	}
+	// as form received value is 'show_operational', config stored value is the opposite
+	config.Portal.NoOperational = !showOperational
+
+	err = utils.WriteConfig(config)
+	if err != nil {
+		log.Printf("Error saving config: %v", err)
+		return
+	}
+
+	//after saving config, redirect to management portal, showing available ssids
+	ssids, err := utils.ReadSsidsFile()
+	if err != nil {
+		fmt.Printf("== wifi-connect/handler: Error reading SSIDs file: %v\n", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	execTemplate(w, managementTemplatePath, ManagementData{Ssids: ssids, Page: "ssids"})
 }
 
 // ConnectHandler reads form got ssid and password and tries to connect to that network

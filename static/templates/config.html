@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+	<title>First config</title>
+
+    <link rel="stylesheet" href="/static/css/application.css" />
+</head>
+
+<body>
+    <div class="wrapper">
+        <div id="main-content" class="inner-wrapper">
+            <div class="row no-border" id="config">
+                <h2>First configuration</h2>
+                <h5>You need to set these config values before continuing:</h5>
+                
+                <fieldset>
+                    <h4>Access Point</h4>
+                    
+                    <label for="ssid">SSID:</label>
+                    <input type="text" id="ssid" required="required" value="{{.Ssid}}" placeholder="Enter SSID"/>
+                    <div class="p-form-validation" id="passphrase_form">
+                        <label for="passphrase">Passphrase:</label>
+                        <input class="p-form-validation__input" type="password" id="passphrase" required="required" onblur="validate_password(this.id)" value="{{.Passphrase}}" placeholder="Enter passphrase"/>
+                        <label for="passphrase_confirm">Confirm passphrase:</label>
+                        <input class="p-form-validation__input" type="password" id="passphrase_confirm" required="required" onblur="validate_password('passphrase')" placeholder="Confirm passphrase"/>
+                    </div>
+                    <div class="p-notification--negative cheshire" id="passphrase_error">
+                        <p class="p-notification__response">
+                            <span class="p-notification__status">Error:</span> Passphrases don't match
+                        </p>
+                    </div>
+                    <label for="interface">Interface:</label>
+                    <input type="text" id="interface" required="required" placeholder="Enter network interface"/>
+                    <label for="regdomain">Regdomain:</label>
+                    <input type="text" id="regdomain" placeholder="Enter regdomain"/>
+                    <label for="channel">Channel:</label>
+                    <select id="channel">
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                        <option value="6">6</option>
+                        <option value="7">7</option>
+                        <option value="8">8</option>
+                        <option value="9">9</option>
+                        <option value="10">10</option>
+                        <option value="11">11</option>
+                        <option value="12">12</option>
+                        <option value="13">13</option>
+                        <option value="14">14</option>
+                    </select>
+                    <label for="operation_mode">Operation mode:</label>
+                    <input type="text" id="operation_mode" placeholder="Enter operation mode"/>
+                </fieldset>
+
+                <br/>
+                
+                <fieldset>
+                    <h4>Portal</h4>
+                    <div class="p-form-validation" id="portal_pwd_form">
+                        <label for="portal_pwd">Portal password:</label>
+                        <input class="p-form-validation__input" type="password" id="portal_pwd" required="required" onblur="validate_password(this.id)"/>
+                        <label for="portal_pwd_confirm">Confirm portal password:</label>
+                        <input class="p-form-validation__input" type="password" id="portal_pwd_confirm" required="required" onblur="validate_password('portal_pwd')"/>
+                    </div>
+                    <div class="p-notification--negative cheshire" id="portal_pwd_error">
+                        <p class="p-notification__response">
+                            <span class="p-notification__status">Error:</span> Passwords don't match
+                        </p>
+                    </div>
+                    <label for="show_operational">Show operational portal:</label>
+                    <input type="checkbox" id="show_operational">
+                </fieldset>
+
+                <br/>
+
+                <div class="p-notification--caution">
+                    <p class="p-notification__response">
+                        <span class="p-notification__status">Warning:</span>This takes down the device AP and disconnects you. Please reconnect in a minute or two
+                    </p>
+                    <br/>
+                    <button class="p-button--positive" onclick="do_submit()">Apply configuration</button>
+                </div>
+            </div>
+        </div>
+    </div>
+<script>
+// function to confirm password, and confirmation are equals.
+// tag param is the name of primary input field for password.
+function validate_password(tag) {
+
+    var pwd = document.getElementById(tag)
+    var pwd_confirm = document.getElementById(tag + '_confirm')
+
+    if (pwd.value != "" && pwd_confirm.value != "" && pwd.value != pwd_confirm.value) {
+        $('#' + tag + "_form").addClass('is-error')
+        $('#' + tag + '_error').css('display', 'block')
+    } else {
+        $('#' + tag + "_form").removeClass('is-error')
+        $('#' + tag + '_error').css('display', 'none')
+    }
+}
+</script>
+</body>
+</html>

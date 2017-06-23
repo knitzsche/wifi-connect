@@ -423,3 +423,7 @@ func (s *S) TestReadConfig(c *check.C) {
 	c.Assert(*cfg.Wifi, check.Equals, *expectedWifiConfig)
 	c.Assert(*cfg.Portal, check.Equals, *expectedPortalConfig)
 }
+
+func (s *S) TestRollbackConfigIfFailsWriting(c *check.C) {
+	//TODO IMPLEMENT
+}

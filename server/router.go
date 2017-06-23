@@ -29,6 +29,7 @@ func managementHandler() *mux.Router {
 
 	// Pages routes
 	router.Handle("/", Middleware(http.HandlerFunc(ManagementHandler))).Methods("GET")
+	router.Handle("/config", Middleware(http.HandlerFunc(SaveConfigHandler))).Methods("POST")
 	router.Handle("/connect", Middleware(http.HandlerFunc(ConnectHandler))).Methods("POST")
 	router.HandleFunc("/hashit", HashItHandler).Methods("POST")
 	router.Handle("/refresh", Middleware(http.HandlerFunc(RefreshHandler))).Methods("GET")
