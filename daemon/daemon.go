@@ -222,13 +222,13 @@ func (c *Client) NewConfig() {
 // returning true, nil on success, true, error on failure. If there is no configuration file,
 // false, error is returned.
 func (c *Client) SetDefaults(cw wifiap.Wifiaper) (bool, error) {
-	content, errR := ioutil.ReadFile(PreConfigFile)
-	if errR != nil {
+	content, err := ioutil.ReadFile(PreConfigFile)
+	if err != nil {
 		return true, err
 	}
-	errJ := json.Unmarshal(content, &Config)
-	if errJ != nil {
-		return true, errJ
+	err = json.Unmarshal(content, &Config)
+	if err != nil {
+		return true, err
 	}
 	ap, errShow := cw.Show()
 	if errShow != nil {
@@ -236,7 +236,7 @@ func (c *Client) SetDefaults(cw wifiap.Wifiaper) (bool, error) {
 	}
 	if ap["wifi.security-passphrase"] != Config.Passphrase {
 		if len(Config.Passphrase) > 0 {
-			err := cw.SetPassphrase(Config.Passphrase)
+			err = cw.SetPassphrase(Config.Passphrase)
 			fmt.Println("== wifi-connect/SetDefaults wifi-ap passphrase being set")
 			if err != nil {
 				fmt.Println("== wifi-connect/daemon/SetDefaults: passphrase err:", err)
@@ -246,7 +246,7 @@ func (c *Client) SetDefaults(cw wifiap.Wifiaper) (bool, error) {
 	}
 	if len(Config.Password) > 0 {
 		fmt.Println("== wifi-connect/SetDefaults portal password being set")
-		_, err := utils.HashIt(Config.Password)
+		_, err = utils.HashIt(Config.Password)
 		if err != nil {
 			fmt.Println("== wifi-connect/daemon/SetDefaults: password err:", err)
 			return true, err
