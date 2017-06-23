@@ -167,7 +167,7 @@ func (mock *mockWifiap) SetPassphrase(p string) error {
 
 func TestSetDefaults(t *testing.T) {
 	client := GetClient()
-	client.SetPreConfigFile("../static/tests/pre-config0.json")
+	PreConfigFile = "../static/tests/pre-config0.json"
 	hfp := "/tmp/hash"
 	if _, err := os.Stat(hfp); err == nil {
 		err = os.Remove(hfp)
@@ -203,7 +203,7 @@ func TestSetDefaults(t *testing.T) {
 			t.Errorf("Could not remove previous file version")
 		}
 	}
-	client.SetPreConfigFile("../static/tests/pre-config1.json")
+	PreConfigFile = "../static/tests/pre-config1.json"
 	client.NewConfig()
 	client.SetDefaults(&mockWifiap{})
 	client.SetDefaults(&mockWifiap{})

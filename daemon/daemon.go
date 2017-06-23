@@ -208,12 +208,6 @@ func (c *Client) OperationalServerDown() {
 	}
 }
 
-// SetPreConfigFile is used only for unit tests to set the json file in which the
-// preconfig normally obtained from the configure hook are stored
-func (c *Client) SetPreConfigFile(path string) {
-	PreConfigFile = path
-}
-
 // GetConfig returns the preconfiguration that may have been done via snap set
 func (c *Client) GetConfig() *PreConfig {
 	return &Config
