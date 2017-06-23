@@ -73,7 +73,7 @@ func TestSnapGetBool0(t *testing.T) {
 	config.ABool = false
 	c.snapGetBool("key", &config.ABool)
 	if !config.ABool {
-		t.Errorf("snapGetBool should be true but is  %s", config.ABool)
+		t.Errorf("snapGetBool should be true but is %t", config.ABool)
 	}
 }
 
@@ -89,7 +89,7 @@ func TestSnapGetBool1(t *testing.T) {
 	config.ABool = true
 	c.snapGetBool("key", &config.ABool)
 	if config.ABool {
-		t.Errorf("snapGetBool should be false but is  %s", config.ABool)
+		t.Errorf("snapGetBool should be false but is %t", config.ABool)
 	}
 }
 
@@ -105,6 +105,6 @@ func TestSnapGetBool2(t *testing.T) {
 	config.ABool = true
 	c.snapGetBool("key", &config.ABool)
 	if !config.ABool {
-		t.Errorf("snapGetBool should be true but is  %s", config.ABool)
+		t.Errorf("snapGetBool should be true but is %t", config.ABool)
 	}
 }
