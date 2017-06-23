@@ -65,7 +65,7 @@ func (c *Client) snapGetStr(key string, target *string) {
 		*target = val
 		return
 	} else {
-		log.Print("== wifi-connect/configure error: key %s exists but has zero length", key)
+		log.Printf("== wifi-connect/configure error: key %s exists but has zero length", key)
 	}
 }
 
@@ -83,7 +83,7 @@ func (c *Client) snapGetBool(key string, target *bool) {
 			return
 		}
 	} else {
-		log.Print("== wifi-connect/configure error: key %s exists but has zero length", key)
+		log.Printf("== wifi-connect/configure error: key %s exists but has zero length", key)
 	}
 
 }
