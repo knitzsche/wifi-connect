@@ -12,16 +12,15 @@
 <body>
     <div class="wrapper">
         <div id="main-content" class="inner-wrapper">
+            <br/>
             <div class="row no-border" id="login">
-                <ul class="no-bullets">
-                    <li><p>Password:</p></li>
-                    <li><input type="password" id="passphrasePage"/></li>
-                    <li>
-                        <input type="checkbox" id="showpassphrasePage" onchange="show_passphrase('Page')"/>
-                        <label for="showpassphrasePage">show passphrase</label>
-                    </li>
-                    <li><input type="button" value="Continue" onclick="authenticate()"/></li>
-                </ul>
+                <fieldset>
+                    <label for="passphrasePage">Password:</label>
+                    <input type="password" id="passphrasePage"/>
+                    <label for="showpassphrasePage">show passphrase</label>
+                    <input type="checkbox" id="showpassphrasePage" onchange="show_passphrase('Page')"/>
+                    <button class="p-button--positive" onclick="authenticate()"/>Continue</button>
+                </fieldset>
             </div>
 
             {{if eq .Page "ssids"}}
@@ -102,7 +101,7 @@
                     <label for="country_code">Country Code:</label>
                     <input type="text" id="country_code" value="{{.Config.Wifi.CountryCode}}" placeholder="Enter Wi-Fi country code"/>
                     <label for="channel">Channel:</label>
-                    <select id="channel" onload="this.value='{{.Config.Wifi.Channel}}'">
+                    <select id="channel">
                         <option value="1">1</option>
                         <option value="2">2</option>
                         <option value="3">3</option>
@@ -138,7 +137,7 @@
                         </p>
                     </div>
                     <label for="show_operational">Show operational portal:</label>
-                    <input type="checkbox" checked="{{.Config.Portal.NoOperational}}" id="show_operational">
+                    <input type="checkbox" id="show_operational">
                 </fieldset>
 
                 <br/>
@@ -173,6 +172,8 @@
     $(document).ready(function() {
         $('#grid').css('display', 'none')
         $('#refreshingAlert').css('display', 'none')
+        $('select').find('option[value={{.Config.Wifi.Channel}}]').attr('selected', 'selected')
+        $('#show_operational').prop('checked', !{{.Config.Portal.NoOperational}})
 	})
 	function showSsids() {
 	    $('#login').css('display', 'none'); 
