@@ -1,5 +1,22 @@
 // -*- Mode: Go; indent-tabs-mode: t -*-
 
+/*
+ * Copyright (C) 2017 Canonical Ltd
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+
 package main
 
 import (
@@ -12,7 +29,25 @@ import (
 	"launchpad.net/wifi-connect/daemon"
 )
 
-func snapGet(key string) (string, error) {
+type Client struct {
+	getter Getter
+}
+
+type Get struct{}
+
+type Getter interface {
+	SnapGet(string) (string, error)
+}
+
+func GetClient() *Client {
+	return &Client{getter: &Get{}}
+}
+
+func GetTestClient(g Getter) *Client {
+	return &Client{getter: g}
+}
+
+func (g *Get) SnapGet(key string) (string, error) {
 	out, err := exec.Command("snapctl", "get", key).Output()
 	if err != nil {
 		return "", err
@@ -21,43 +56,45 @@ func snapGet(key string) (string, error) {
 
 }
 
+func (c *Client) snapGetStr(key string, target *string) {
+	val, err := c.getter.SnapGet(key)
+	if err != nil {
+		return
+	}
+	if len(val) > 0 {
+		*target = val
+		return
+	} else {
+		log.Print("== wifi-connect/configure error: key %s exists but has zero length")
+	}
+}
+
+func (c *Client) snapGetBool(key string, target *bool) {
+	val, err := c.getter.SnapGet(key)
+	if err != nil {
+		return
+	}
+	if len(val) > 0 {
+		if val == "true" {
+			*target = true
+			return
+		} else {
+			*target = false
+			return
+		}
+	} else {
+		log.Print("== wifi-connect/configure error: key %s exists but has zero length")
+	}
+
+}
+
 func main() {
+	client := GetClient()
 	preConfig := &daemon.PreConfig{}
-	var val string
-	var err error
-	val, err = snapGet("wifi.security-passphrase")
-	if err != nil {
-		log.Print("== wifi-connect/configure error", err)
-	}
-	if len(val) > 0 {
-		preConfig.Passphrase = val
-	}
-
-	val, err = snapGet("portal.password")
-	if err != nil {
-		log.Print("== wifi-connect/configure error", err)
-	}
-	if len(val) > 0 {
-		preConfig.Password = val
-	}
-
-	val, err = snapGet("portal.no-operational")
-	if err != nil {
-		log.Print("== wifi-connect/configure error", err)
-	}
-	preConfig.NoOperational = false // default
-	if val == "true" {
-		preConfig.NoOperational = true
-	}
-
-	val, err = snapGet("portal.no-reset-creds")
-	if err != nil {
-		log.Print("== wifi-connect/configure error", err)
-	}
-	preConfig.NoResetCreds = false // default
-	if val == "true" {
-		preConfig.NoResetCreds = true
-	}
+	client.snapGetStr("wifi.security-passphrase", &preConfig.Passphrase)
+	client.snapGetStr("portal.password", &preConfig.Password)
+	client.snapGetBool("portal.no-operational", &preConfig.NoOperational)
+	client.snapGetBool("portal.no-reset-creds", &preConfig.NoResetCreds)
 
 	b, errJM := json.Marshal(preConfig)
 	if errJM == nil {
