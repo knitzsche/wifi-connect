@@ -34,7 +34,7 @@ const (
 	managementTemplatePath  = "/templates/management.html"
 	connectingTemplatePath  = "/templates/connecting.html"
 	operationalTemplatePath = "/templates/operational.html"
-	firstConfigTemplatePath = "/templates/first_config.html"
+	firstConfigTemplatePath = "/templates/config.html"
 )
 
 // ResourcesPath absolute path to web static resources
@@ -48,16 +48,15 @@ var cw interface{}
 // Data interface representing any data included in a template
 type Data interface{}
 
-// FirstConfigData already existing data to show in input boxes when first config
-type FirstConfigData struct {
-	Ssid           string
-	Passphrase     string
-	PortalPassword string
-}
-
-// SsidsData dynamic data to fulfill the SSIDs page template
-type SsidsData struct {
-	Ssids []string
+// ManagementData dynamic data to fulfill the management page.
+// It can contain SSIDs list or snap configuration
+// NOTE: page is a workaround to render proper grid depending on its value (ssids or config).
+// In case authentication mechanism is modified for not to be so intrusive, we could have
+// different pages for this
+type ManagementData struct {
+	Ssids  []string
+	Config *utils.Config
+	Page   string
 }
 
 // ConnectingData dynamic data to fulfill the connect result page template
@@ -85,33 +84,6 @@ func execTemplate(w http.ResponseWriter, templatePath string, data Data) {
 	}
 }
 
-// configHandler manages configuration parameters set
-func configHandler(w http.ResponseWriter, r *http.Request) {
-	// get current wifi-ap SSID and passphrase.
-	result, err := wifiapClient.Show()
-	if err != nil {
-		log.Printf("Error getting wifi configuration: %v\n", err)
-		//TODO needed to have a generic error page?
-		return
-	}
-
-	var ok bool
-	var ssid string
-	if ssid, ok = result["wifi.ssid"].(string); !ok {
-		log.Println("Could not read wifi.ssid param")
-		return
-	}
-
-	var passphrase string
-	if passphrase, ok = result["wifi.security-passphrase"].(string); !ok {
-		log.Println("Could not read wifi.security-passphrase param")
-		return
-	}
-
-	firstConfigData := FirstConfigData{Ssid: ssid, Passphrase: passphrase}
-	execTemplate(w, firstConfigTemplatePath, firstConfigData)
-}
-
 // ManagementHandler lists the current available SSIDs
 func ManagementHandler(w http.ResponseWriter, r *http.Request) {
 	config, err := utils.ReadConfig()
@@ -120,19 +92,23 @@ func ManagementHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	data := ManagementData{}
+
 	if !config.Portal.NoResetCredentials && utils.MustSetConfig() {
-		configHandler(w, r)
-	}
+		data.Page = "config"
+		data.Config = config
+	} else {
+		// daemon stores current available ssids in a file
+		ssids, err := utils.ReadSsidsFile()
+		if err != nil {
+			fmt.Printf("== wifi-connect/handler: Error reading SSIDs file: %v\n", err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 
-	// daemon stores current available ssids in a file
-	ssids, err := utils.ReadSsidsFile()
-	if err != nil {
-		fmt.Printf("== wifi-connect/handler: Error reading SSIDs file: %v\n", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		data.Page = "ssids"
+		data.Ssids = ssids
 	}
-
-	data := SsidsData{Ssids: ssids}
 
 	// parse template
 	execTemplate(w, managementTemplatePath, data)

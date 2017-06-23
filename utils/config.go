@@ -9,13 +9,15 @@ import (
 
 	"log"
 
+	"strconv"
+
 	"launchpad.net/wifi-connect/wifiap"
 )
 
 var configFile = filepath.Join(os.Getenv("SNAP_COMMON"), "config.json")
 var mustConfigFlagFile = filepath.Join(os.Getenv("SNAP_COMMON"), ".config_done.flag")
 
-var wifiapClient wifiap.Operations
+var wifiapClient wifiap.Operations = wifiap.DefaultClient()
 
 // Config this project config got from wifi-ap + custom wifi-connect params
 type Config struct {
@@ -108,12 +110,23 @@ func readRemoteConfig() (*WifiConfig, error) {
 		return nil, fmt.Errorf("Error reading wifi-ap remote configuration: %v", err)
 	}
 
+	// NOTE: Preprocessing for the case of wifi.channel.
+	// In the case of the channel, it is returned as string from rest api, but we have to convert it
+	// as it is handled as int internally.
+	// In case wifi-ap provides this in future as int, this could be replaced by
+	//
+	// readRemoteParam(settings, "wifi.channel", 0).(int)
+	channel, err := strconv.Atoi(readRemoteParam(settings, "wifi.channel", 0).(string))
+	if err != nil {
+		return nil, fmt.Errorf("Could not parse wifi.channel parameter: %v", err)
+	}
+
 	return &WifiConfig{
 		Ssid:          readRemoteParam(settings, "wifi.ssid", "").(string),
 		Passphrase:    readRemoteParam(settings, "wifi.security-passphrase", "").(string),
 		Interface:     readRemoteParam(settings, "wifi.interface", "").(string),
 		CountryCode:   readRemoteParam(settings, "wifi.country-code", "").(string),
-		Channel:       readRemoteParam(settings, "wifi.channel", 0).(int),
+		Channel:       channel,
 		OperationMode: readRemoteParam(settings, "wifi.operation-mode", "").(string),
 	}, nil
 }
