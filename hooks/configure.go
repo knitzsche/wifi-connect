@@ -4,6 +4,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os/exec"
@@ -12,51 +13,68 @@ import (
 	"launchpad.net/wifi-connect/daemon"
 )
 
-func snapGet(key string) (string, error) {
+func snapGet(key string, target interface{}) (interface{}, error) {
+	var res interface{}
+	var ok bool
 	out, err := exec.Command("snapctl", "get", key).Output()
 	if err != nil {
-		return "", err
+		return res, err
 	}
-	return strings.TrimSpace(string(out)), nil
+	val := strings.TrimSpace(string(out))
+	_, ok = target.(string)
+	if ok {
+		if len(val) > 0 {
+			return val, nil
+		} else {
+			return "", fmt.Errorf("== wifi-connect/configure error: key %s exists but has zero length")
+		}
+	}
 
+	_, ok = target.(bool)
+	if ok {
+		if len(val) > 0 {
+			if val == "true" {
+				return true, nil
+			} else {
+				return false, nil
+			}
+		} else {
+			return res, fmt.Errorf("== wifi-connect/configure error: key %s exists but has zero length")
+		}
+	}
+	return res, nil
 }
 
 func main() {
 	preConfig := &daemon.PreConfig{}
-	var val string
+	var res interface{}
 	var err error
-	val, err = snapGet("wifi.security-passphrase")
+	res, err = snapGet("wifi.security-passphrase", preConfig.Passphrase)
 	if err != nil {
-		log.Print("== wifi-connect/configure error", err)
-	}
-	if len(val) > 0 {
-		preConfig.Passphrase = val
+		log.Print(err)
+	} else {
+		preConfig.Passphrase = res.(string)
 	}
 
-	val, err = snapGet("portal.password")
+	res, err = snapGet("portal.password", preConfig.Password)
 	if err != nil {
-		log.Print("== wifi-connect/configure error", err)
-	}
-	if len(val) > 0 {
-		preConfig.Password = val
+		log.Print(err)
+	} else {
+		preConfig.Password = res.(string)
 	}
 
-	val, err = snapGet("portal.no-operational")
+	res, err = snapGet("portal.no-operational", preConfig.NoOperational)
 	if err != nil {
-		log.Print("== wifi-connect/configure error", err)
-	}
-	preConfig.NoOperational = false // default
-	if val == "true" {
-		preConfig.NoOperational = true
+		log.Print(err)
+	} else {
+		preConfig.NoOperational = res.(bool)
 	}
 
-	val, err = snapGet("portal.no-reset-creds")
+	res, err = snapGet("portal.no-reset-creds", preConfig.NoResetCreds)
 	if err != nil {
-		log.Print("== wifi-connect/configure error", err)
-	}
-	preConfig.NoResetCreds = false // default
-	if val == "true" {
-		preConfig.NoResetCreds = true
+		log.Print(err)
+	} else {
+		preConfig.NoResetCreds = res.(bool)
 	}
 
 	b, errJM := json.Marshal(preConfig)
