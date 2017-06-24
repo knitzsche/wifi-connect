@@ -15,64 +15,63 @@
             <br/>
             <div class="row no-border" id="login">
                 <fieldset>
-                    <label for="passphrasePage">Password:</label>
-                    <input type="password" id="passphrasePage"/>
-                    <label for="showpassphrasePage">show passphrase</label>
-                    <input type="checkbox" id="showpassphrasePage" onchange="show_passphrase('Page')"/>
+                    <div class="p-form-validation" id="passphrasePage_form">
+                        <label for="passphrasePage">Password:</label>
+                        <input class="p-form-validation__input" type="password" id="passphrasePage"/>
+                        <input type="checkbox" id="showpassphrasePage" onchange="show_passphrase('Page')"/>
+                        <label for="showpassphrasePage">show passphrase</label>
+                    </div>
+                    <div class="p-notification--negative cheshire" id="passphrasePage_error">
+                        <p class="p-notification__response">
+                            <span class="p-notification__status">Error:</span> <text id="passphrasePage_error_msg"></text>
+                        </p>
+                    </div>
                     <button class="p-button--positive" onclick="authenticate()"/>Continue</button>
                 </fieldset>
             </div>
 
             {{if eq .Page "ssids"}}
             <div class="row no-border" id="grid">
-               <h2>Select Wi-Fi to connect to:</h2>
-               <fieldset>
-                <br/>
-                <table>
+                <h2>Select Wi-Fi to connect to:</h2>
+                <ul class="p-list--divided">
                 {{range $i, $ssid := .Ssids}}
-                <tr>
-                    <th scope="row">
-                        <label class="collapse" for="radio{{$i}}">{{$ssid}}</label>
-                        <input id="radio{{$i}}" type="radio" name="c1">
-                        <div class="six-col">
-                        <fieldset>
-                        <ul class="no-bullets">
-                            <li>
-                                <input type="hidden" id="ssid{{$i}}" value="{{$ssid}}"/>
-                                <label for="passphrase">Enter passphrase:</label>
-                                <input type="password" id="passphrase{{$i}}"/>
-                            </li>
-                            <li>
-                                <input type="checkbox" id="showpassphrase{{$i}}" onchange="show_passphrase({{$i}})"/>
-                                <label for="showpassphrase">show passphrase</label>
-                            </li>
-                            <li>
-                                 <div id="alert{{$i}}" class="cheshire box" style="background-color: #eee">
-                                    <h3>Caution!</h3>
-                                    <p>Continuing will disconnect you from the device by taking down its Wi-Fi network. 
-                                        This page will be unavailable. After continuing, you may connect to the device 
-                                        through its new Wi-Fi connection. Proceed?.</p>    
-                                </div>
-                            </li>
-                            <li>
-                                <input type="button" value="Cancel" class="button--primary" onclick="clear_row({{$i}})"/>
-                                <input type="button" id="connect{{$i}}" value="Connect" class="button--primary" onclick="do_connect({{$i}})"/>
-                            </li>
-                        </ul>
-                        </fieldset>
+                <li class="p-list__item">
+                    <label class="collapse" for="radio{{$i}}">{{$ssid}}</label>
+                    <input id="radio{{$i}}" type="radio" name="c1">
+                    <div>
+                    <br/>
+                    <fieldset>
+                        <input type="hidden" id="ssid{{$i}}" value="{{$ssid}}"/>
+                        <label for="passphrase">Enter passphrase:</label>
+                        <input type="password" id="passphrase{{$i}}"/>
+                        <input type="checkbox" id="showpassphrase{{$i}}" onchange="show_passphrase({{$i}})"/>
+                        <label for="showpassphrase">show passphrase</label>
+                        <br/>
+                        <div id="alert{{$i}}" class="p-notification--caution cheshire">
+                            <p class="p-notification__response">
+                                <span class="p-notification__status">Warning:</span>
+                                Continuing will disconnect you from the device by taking down its Wi-Fi network. 
+                                This page will be unavailable. After continuing, you may connect to the device 
+                                through its new Wi-Fi connection. Proceed?.
+                            </p>
                         </div>
-                    </th>
-                </tr>
+                        <button class="p-button--neutral" onclick="clear_row({{$i}})">Cancel</button>
+                        <input type="button" class="p-button--positive" id="connect{{$i}}" value="Connect" onclick="do_connect({{$i}})"/>
+                    </fieldset>
+                    </div>
+                </li>
                 {{end}}
-                </table>
 
-                <div class="box" style="background-color: #eee">
-                    <h3>Warning</h3>
-                    <p>This takes down the device AP and disconnects you. Please reconnect in a minute or two</p>
-                    <input type="button" value="Refresh Wi-Fi Access Points" class="button--primary" onclick="do_refresh()"/>
+                </ul>
+
+                <div class="p-notification--caution">
+                    <p class="p-notification__response">
+                        <span class="p-notification__status">Warning:</span>
+                        This takes down the device AP and disconnects you. Please reconnect in a minute or two
+                    </p>
+                    <br/>
+                    <button class="p-button--neutral" onclick="do_refresh()">Refresh Wi-Fi Access Points</button>
                 </div>
-
-                </fieldset>
             </div>
         
             {{else if eq .Page "config"}}
@@ -136,26 +135,35 @@
                             <span class="p-notification__status">Error:</span> <text id="portal_pwd_error_msg"></text>
                         </p>
                     </div>
-                    <label for="show_operational">Show operational portal:</label>
                     <input type="checkbox" id="show_operational">
+                    <label for="show_operational">Show operational portal</label>
                 </fieldset>
 
                 <br/>
 
                 <div class="p-notification--caution">
                     <p class="p-notification__response">
-                        <span class="p-notification__status">Warning:</span>This takes down the device AP and disconnects you. Please reconnect in a minute or two
+                        <span class="p-notification__status">Warning:</span>
+                        This takes down the device AP and disconnects you. Please reconnect in a minute or two
                     </p>
                     <br/>
                     <button class="p-button--positive" onclick="saveConfig()">Apply configuration</button>
                 </div>
+                <div class="p-notification--negative cheshire" id="saveConfig_error">
+                    <p class="p-notification__response">
+                        <span class="p-notification__status">Error:</span>Could not save configuration. Server error.
+                    </p>
+                </div>
             </div>
             {{end}}
-            
-            <div class="row no-border" id="refreshingAlert">
-                <h3>Refreshing Wi-Fi access points...</h3>
-                <div class="twelve-col box" style="background-color: #eee">
-                    <p>You have been disconnected. The device is refreshing Wi-Fi access points. Please rejoin the device access point and reload this page in a minute or two.</p>
+
+            <div class="row no-border">
+                <div class="p-notification" id="refreshingAlert">
+                    <p class="p-notification__response">
+                        <span class="p-notification__status">Refreshing Wi-Fi access points...</span>
+                        You have been disconnected. The device is refreshing Wi-Fi access points. 
+                        Please rejoin the device access point and reload this page in a minute or two.
+                    </p>
                 </div>
             </div>
 
@@ -196,25 +204,22 @@
         $('#refreshingAlert').css('display', 'block');
     }
 	function authenticate() {
-        var pw = $('#passphrasePage').val();
-	    if ( pw.length < 8) {
-		    alert("Password must be at least 8 characters long");
-	    } else {
-	        $.ajax({
-	          type: "POST",
-	          url: "/hashit",
-	          data: {Hash: pw}
-	        }).done(function (hashRet) {
-                console.log("in ajax done.", hashRet);
-                hash = JSON.parse(hashRet);
-                console.log(hash)
-                if (hash.HashMatch) {
-                    showSsids();
-                } else {
-                    alert("Your password does not match, please try again");
-                }
-	        })
-        }
+        $.ajax({
+            type: "POST",
+            url: "/hashit",
+            data: {Hash: $('#passphrasePage').val()}
+        }).done(function (hashRet) {
+            console.log("in ajax done.", hashRet);
+            hash = JSON.parse(hashRet);
+            console.log(hash)
+            if (hash.HashMatch) {
+                showSsids();
+            } else {
+                $('#passphrasePage_form').addClass('is-error')
+                $('#passphrasePage_error_msg').text('Your password does not match, please try again')
+                $('#passphrasePage_error').css('display', 'block')
+            }
+        })
 	}    
     function saveConfig() {
         if (!validate_password('passphrase', 13)) {
@@ -238,7 +243,9 @@
             }
         }).done(function (response) {
             showSsids();
-        })
+        }).fail(function() {
+            $('#saveConfig_error').css('display', 'block')
+        });
     }
     // function to confirm password, and confirmation are equals.
     // tag param is the name of primary input field for password.

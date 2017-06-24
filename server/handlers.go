@@ -86,46 +86,42 @@ func execTemplate(w http.ResponseWriter, templatePath string, data Data) {
 	}
 }
 
-// ManagementHandler lists the current available SSIDs
+// ManagementHandler handles management portal
 func ManagementHandler(w http.ResponseWriter, r *http.Request) {
-	config, err := utils.ReadConfig()
-	if err != nil {
-		log.Printf("Error reading configuration: %v\n", err)
-		return
-	}
 
-	data := ManagementData{}
+	if utils.MustSetConfig() {
 
-	if !config.Portal.NoResetCredentials && utils.MustSetConfig() {
-		data.Page = "config"
-		data.Config = config
-	} else {
-		// daemon stores current available ssids in a file
-		ssids, err := utils.ReadSsidsFile()
+		config, err := utils.ReadConfig()
 		if err != nil {
-			fmt.Printf("== wifi-connect/handler: Error reading SSIDs file: %v\n", err)
+			log.Printf("Error reading configuration: %v\n", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		data.Page = "ssids"
-		data.Ssids = ssids
+		if !config.Portal.NoResetCredentials {
+			execTemplate(w, managementTemplatePath, ManagementData{Config: config, Page: "config"})
+			return
+		}
+
 	}
 
-	// parse template
-	execTemplate(w, managementTemplatePath, data)
+	ssids, err := utils.ReadSsidsFile()
+	if err != nil {
+		fmt.Printf("== wifi-connect/handler: Error reading SSIDs file: %v\n", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	execTemplate(w, managementTemplatePath, ManagementData{Ssids: ssids, Page: "ssids"})
 }
 
 // SaveConfigHandler saves config received as form post parameters
 func SaveConfigHandler(w http.ResponseWriter, r *http.Request) {
-
-	//TODO TRACE
-	log.Println("SAVECONFIGHANDLER")
-
 	// read previous config
 	config, err := utils.ReadConfig()
 	if err != nil {
 		log.Printf("Error reading previous stored config: %v", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -138,6 +134,7 @@ func SaveConfigHandler(w http.ResponseWriter, r *http.Request) {
 	config.Wifi.Channel, err = strconv.Atoi(utils.ParseFormParamSingleValue(r.Form, "Channel"))
 	if err != nil {
 		log.Printf("Error parsing channel form value: %v", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	config.Wifi.OperationMode = utils.ParseFormParamSingleValue(r.Form, "OperationalMode")
@@ -145,6 +142,8 @@ func SaveConfigHandler(w http.ResponseWriter, r *http.Request) {
 	showOperational, err := strconv.ParseBool(utils.ParseFormParamSingleValue(r.Form, "ShowOperational"))
 	if err != nil {
 		log.Printf("Error parsing show operational form value: %v", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 	// as form received value is 'show_operational', config stored value is the opposite
 	config.Portal.NoOperational = !showOperational
@@ -152,6 +151,7 @@ func SaveConfigHandler(w http.ResponseWriter, r *http.Request) {
 	err = utils.WriteConfig(config)
 	if err != nil {
 		log.Printf("Error saving config: %v", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -192,6 +192,7 @@ func ConnectHandler(w http.ResponseWriter, r *http.Request) {
 		err := wifiapClient.Disable()
 		if err != nil {
 			log.Print(Sprintf("Error disabling AP: %v\n", err))
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
@@ -203,6 +204,7 @@ func ConnectHandler(w http.ResponseWriter, r *http.Request) {
 		//TODO signal user in portal on failure to connect
 		if err != nil {
 			log.Print(Sprintf("Failed connecting to %v.\n", ssid))
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
