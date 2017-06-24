@@ -456,6 +456,78 @@ NoOperational: false`
 	c.Assert(cfg.String(), check.Equals, expected)
 }
 
+type wifiapErrorClientMock struct {
+}
+
+func (c *wifiapErrorClientMock) Show() (map[string]interface{}, error) {
+	return nil, fmt.Errorf("Could not show config")
+}
+
+func (c *wifiapErrorClientMock) Enable() error {
+	return fmt.Errorf("Could not get disabled value")
+}
+
+func (c *wifiapErrorClientMock) Disable() error {
+	return fmt.Errorf("Could not get disabled value")
+}
+
+func (c *wifiapErrorClientMock) Enabled() (bool, error) {
+	return false, fmt.Errorf("Could not get disabled value")
+}
+
+func (c *wifiapErrorClientMock) SetSsid(string) error {
+	return fmt.Errorf("Could not set ssid")
+}
+
+func (c *wifiapErrorClientMock) SetPassphrase(string) error {
+	return fmt.Errorf("Could not set passphrase")
+}
+
+func (c *wifiapErrorClientMock) Set(map[string]interface{}) error {
+	return fmt.Errorf("Could not set values")
+}
+
 func (s *S) TestRollbackConfigIfFailsWriting(c *check.C) {
-	//TODO IMPLEMENT
+	configFile = filepath.Join(os.TempDir(), "config"+randomName())
+	defer os.Remove(configFile)
+
+	mustConfigFlagFile = filepath.Join(os.TempDir(), "config_done"+randomName())
+	defer os.Remove(mustConfigFlagFile)
+
+	// create a previous local config file
+	localPreviousConfig := &PortalConfig{
+		Password:           "the_previous_password",
+		NoResetCredentials: false,
+		NoOperational:      true,
+	}
+
+	err := writeLocalConfig(localPreviousConfig)
+	c.Assert(err, check.IsNil)
+
+	// config to save
+	cfg := &Config{
+		Wifi: &WifiConfig{
+			Ssid:          "Ubuntu",
+			Passphrase:    "17Soj8/Sxh14lcpD",
+			Interface:     "wlp2s0",
+			CountryCode:   "0x31",
+			Channel:       6,
+			OperationMode: "g",
+		},
+		Portal: &PortalConfig{
+			Password:           "the_password",
+			NoResetCredentials: true,
+			NoOperational:      false,
+		},
+	}
+
+	// assert write fails
+	wifiapClient = &wifiapErrorClientMock{}
+	err = WriteConfig(cfg)
+	c.Assert(err, check.NotNil)
+
+	// read local after write file and verify it's the original one
+	localCfg, err := readLocalConfig()
+	c.Assert(err, check.IsNil)
+	c.Assert(*localCfg, check.Equals, *localPreviousConfig)
 }

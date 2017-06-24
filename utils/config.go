@@ -4,13 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
-
-	"log"
-
 	"strconv"
-
 	"strings"
 
 	"launchpad.net/wifi-connect/wifiap"
