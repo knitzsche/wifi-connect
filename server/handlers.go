@@ -119,6 +119,9 @@ func ManagementHandler(w http.ResponseWriter, r *http.Request) {
 // SaveConfigHandler saves config received as form post parameters
 func SaveConfigHandler(w http.ResponseWriter, r *http.Request) {
 
+	//TODO TRACE
+	log.Println("SAVECONFIGHANDLER")
+
 	// read previous config
 	config, err := utils.ReadConfig()
 	if err != nil {

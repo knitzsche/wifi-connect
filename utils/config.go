@@ -11,6 +11,8 @@ import (
 
 	"strconv"
 
+	"strings"
+
 	"launchpad.net/wifi-connect/wifiap"
 )
 
@@ -40,6 +42,35 @@ type PortalConfig struct {
 	Password           string `json:"portal.password"`
 	NoResetCredentials bool   `json:"portal.no-reset-creds"`
 	NoOperational      bool   `json:"portal.no-operational"`
+}
+
+func (c *Config) String() string {
+	s := []string{
+		strings.Join([]string{"--Wifi--", c.Wifi.String()}, "\n"),
+		strings.Join([]string{"--Portal--", c.Portal.String()}, "\n"),
+	}
+	return fmt.Sprintf(strings.Join(s, "\n"))
+}
+
+func (c *PortalConfig) String() string {
+	s := []string{
+		strings.Join([]string{"Password: ", c.Password}, " "),
+		strings.Join([]string{"NoResetCredentials:", strconv.FormatBool(c.NoResetCredentials)}, " "),
+		strings.Join([]string{"NoOperational:", strconv.FormatBool(c.NoOperational)}, " "),
+	}
+	return fmt.Sprintf(strings.Join(s, "\n"))
+}
+
+func (c *WifiConfig) String() string {
+	s := []string{
+		strings.Join([]string{"Ssid: ", c.Ssid}, " "),
+		strings.Join([]string{"Passphrase:", c.Passphrase}, " "),
+		strings.Join([]string{"Interface:", c.Interface}, " "),
+		strings.Join([]string{"CountryCode:", c.CountryCode}, " "),
+		strings.Join([]string{"Channel:", strconv.Itoa(c.Channel)}, " "),
+		strings.Join([]string{"OperationMode:", c.OperationMode}, " "),
+	}
+	return fmt.Sprintf(strings.Join(s, "\n"))
 }
 
 func defaultPortalConfig() *PortalConfig {
@@ -116,7 +147,7 @@ func readRemoteConfig() (*WifiConfig, error) {
 	// In case wifi-ap provides this in future as int, this could be replaced by
 	//
 	// readRemoteParam(settings, "wifi.channel", 0).(int)
-	channel, err := strconv.Atoi(readRemoteParam(settings, "wifi.channel", 0).(string))
+	channel, err := strconv.Atoi(readRemoteParam(settings, "wifi.channel", "0").(string))
 	if err != nil {
 		return nil, fmt.Errorf("Could not parse wifi.channel parameter: %v", err)
 	}
@@ -175,7 +206,7 @@ var WriteConfig = func(c *Config) error {
 	err = writeLocalConfig(c.Portal)
 	if err != nil {
 		// if an error happens writing local config there is no need to restore
-		// backup, as nothing has been writen
+		// backup, as nothing has been written
 		return err
 	}
 

@@ -244,7 +244,7 @@ func (s *S) TestReadRemoteConfig(c *check.C) {
 			"share.disabled":           false,
 			"share.network-interface":  "wlp2s0",
 			"wifi.address":             "10.0.60.1",
-			"wifi.channel":             6,
+			"wifi.channel":             "6", // in real environment, channel is returned as string
 			"wifi.hostapd-driver":      "nl80211",
 			"wifi.interface":           "wlp2s0",
 			"wifi.interface-mode":      "direct",
@@ -384,7 +384,7 @@ func (s *S) TestReadConfig(c *check.C) {
 			"share.disabled":           false,
 			"share.network-interface":  "wlp2s0",
 			"wifi.address":             "10.0.60.1",
-			"wifi.channel":             6,
+			"wifi.channel":             "6", // in real environment, channel is returned as string
 			"wifi.hostapd-driver":      "nl80211",
 			"wifi.interface":           "wlp2s0",
 			"wifi.interface-mode":      "direct",
@@ -422,6 +422,38 @@ func (s *S) TestReadConfig(c *check.C) {
 	c.Assert(err, check.IsNil)
 	c.Assert(*cfg.Wifi, check.Equals, *expectedWifiConfig)
 	c.Assert(*cfg.Portal, check.Equals, *expectedPortalConfig)
+}
+
+func (s *S) TestConfigDump(c *check.C) {
+	cfg := &Config{
+		Wifi: &WifiConfig{
+			Ssid:          "Ubuntu",
+			Passphrase:    "17Soj8/Sxh14lcpD",
+			Interface:     "wlp2s0",
+			CountryCode:   "0x31",
+			Channel:       6,
+			OperationMode: "g",
+		},
+		Portal: &PortalConfig{
+			Password:           "the_password",
+			NoResetCredentials: true,
+			NoOperational:      false,
+		},
+	}
+
+	expected := `--Wifi--
+Ssid:  Ubuntu
+Passphrase: 17Soj8/Sxh14lcpD
+Interface: wlp2s0
+CountryCode: 0x31
+Channel: 6
+OperationMode: g
+--Portal--
+Password:  the_password
+NoResetCredentials: true
+NoOperational: false`
+
+	c.Assert(cfg.String(), check.Equals, expected)
 }
 
 func (s *S) TestRollbackConfigIfFailsWriting(c *check.C) {
