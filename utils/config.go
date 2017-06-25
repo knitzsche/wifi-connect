@@ -82,8 +82,9 @@ func defaultPortalConfig() *PortalConfig {
 // If needed to scale, we could rewrite this method to support a more generic type
 func readLocalConfig() (*PortalConfig, error) {
 	if _, err := os.Stat(configFile); os.IsNotExist(err) {
-		log.Printf("Not found local config file at %v. Applying default local configuration", configFile)
-		return defaultPortalConfig(), nil
+		log.Printf("Warn: not found local config file at %v\n", configFile)
+		// in case there is no local config file, return a null pointer
+		return nil, nil
 	}
 
 	fileContents, err := ioutil.ReadFile(configFile)
@@ -91,6 +92,7 @@ func readLocalConfig() (*PortalConfig, error) {
 		return nil, fmt.Errorf("Error reading json config file: %v", err)
 	}
 
+	// parameters not available in config file will be se to default value
 	portalConfig := defaultPortalConfig()
 	err = json.Unmarshal(fileContents, portalConfig)
 	if err != nil {
@@ -109,14 +111,6 @@ func writeLocalConfig(p *PortalConfig) error {
 	err = ioutil.WriteFile(configFile, bytes, 0644)
 	if err != nil {
 		return fmt.Errorf("Could not write local config to file: %v", err)
-	}
-
-	// write flag file for not asking more times for configuring snap before first use
-	if MustSetConfig() {
-		err = WriteFlagFile(mustConfigFlagFile)
-		if err != nil {
-			return fmt.Errorf("Error writing flag file after configuring for a first time")
-		}
 	}
 
 	return nil
@@ -188,6 +182,11 @@ var ReadConfig = func() (*Config, error) {
 		return nil, err
 	}
 
+	// if local config is nil, fill returning object with default values
+	if portalConfig == nil {
+		portalConfig = defaultPortalConfig()
+	}
+
 	return &Config{Wifi: wifiConfig, Portal: portalConfig}, nil
 }
 
@@ -209,13 +208,23 @@ var WriteConfig = func(c *Config) error {
 
 	err = writeRemoteConfig(c.Wifi)
 	if err != nil {
-		// restore backup
-		backupErr := writeLocalConfig(localConfigBackup)
-		if backupErr != nil {
-			return fmt.Errorf("Could not restore previous local configuration: %v", backupErr)
+		// restore backup if not nil. If backup is nil it means there is no previous stored local config
+		if localConfigBackup != nil {
+			backupErr := writeLocalConfig(localConfigBackup)
+			if backupErr != nil {
+				return fmt.Errorf("Could not restore previous local configuration: %v", backupErr)
+			}
 		}
 		// return error after completing backup
 		return err
+	}
+
+	// write flag file for not asking more times for configuring snap before first use
+	if MustSetConfig() {
+		err = WriteFlagFile(mustConfigFlagFile)
+		if err != nil {
+			return fmt.Errorf("Error writing flag file after configuring for a first time")
+		}
 	}
 
 	return nil

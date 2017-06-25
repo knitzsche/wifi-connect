@@ -136,8 +136,7 @@ func (s *S) TestReadLocalNotExistingConfig(c *check.C) {
 
 	cfg, err := readLocalConfig()
 	c.Assert(err, check.IsNil)
-
-	verifyDefaultLocalConfig(c, cfg)
+	c.Assert(cfg, check.IsNil)
 }
 
 func (s *S) TestWriteLocalConfigFileDoesNotExists(c *check.C) {
@@ -146,8 +145,6 @@ func (s *S) TestWriteLocalConfigFileDoesNotExists(c *check.C) {
 	configFile = filepath.Join(os.TempDir(), "config"+randomName())
 	defer os.Remove(configFile)
 
-	c.Assert(MustSetConfig(), check.Equals, true)
-
 	err := writeLocalConfig(testPortalConfig)
 	c.Assert(err, check.IsNil)
 
@@ -155,7 +152,6 @@ func (s *S) TestWriteLocalConfigFileDoesNotExists(c *check.C) {
 	c.Assert(err, check.IsNil)
 
 	c.Assert(*cfg, check.Equals, *testPortalConfig)
-	c.Assert(MustSetConfig(), check.Equals, false)
 }
 
 func (s *S) TestWriteLocalConfigFiletExists(c *check.C) {
@@ -168,8 +164,6 @@ func (s *S) TestWriteLocalConfigFiletExists(c *check.C) {
 	defer os.Remove(f.Name())
 	configFile = f.Name()
 
-	c.Assert(MustSetConfig(), check.Equals, true)
-
 	err = writeLocalConfig(testPortalConfig)
 	c.Assert(err, check.IsNil)
 
@@ -177,26 +171,6 @@ func (s *S) TestWriteLocalConfigFiletExists(c *check.C) {
 	c.Assert(err, check.IsNil)
 
 	c.Assert(*cfg, check.Equals, *testPortalConfig)
-	c.Assert(MustSetConfig(), check.Equals, false)
-}
-
-func (s *S) TestMustSetConfig(c *check.C) {
-	mustConfigFlagFile = filepath.Join(os.TempDir(), "config_done"+randomName())
-	defer os.Remove(mustConfigFlagFile)
-	configFile = filepath.Join(os.TempDir(), "config"+randomName())
-	defer os.Remove(configFile)
-
-	c.Assert(MustSetConfig(), check.Equals, true)
-
-	err := writeLocalConfig(testPortalConfig)
-	c.Assert(err, check.IsNil)
-
-	c.Assert(MustSetConfig(), check.Equals, false)
-
-	err = writeLocalConfig(testPortalConfig)
-	c.Assert(err, check.IsNil)
-
-	c.Assert(MustSetConfig(), check.Equals, false)
 }
 
 // #####################
@@ -422,6 +396,44 @@ func (s *S) TestReadConfig(c *check.C) {
 	c.Assert(err, check.IsNil)
 	c.Assert(*cfg.Wifi, check.Equals, *expectedWifiConfig)
 	c.Assert(*cfg.Portal, check.Equals, *expectedPortalConfig)
+}
+
+func (s *S) TestMustSetConfig(c *check.C) {
+	mustConfigFlagFile = filepath.Join(os.TempDir(), "config_done"+randomName())
+	defer os.Remove(mustConfigFlagFile)
+	configFile = filepath.Join(os.TempDir(), "config"+randomName())
+	defer os.Remove(configFile)
+
+	wifiapClient = &wifiapClientMock{}
+
+	// config to save
+	cfg := &Config{
+		Wifi: &WifiConfig{
+			Ssid:          "Ubuntu",
+			Passphrase:    "17Soj8/Sxh14lcpD",
+			Interface:     "wlp2s0",
+			CountryCode:   "0x31",
+			Channel:       6,
+			OperationMode: "g",
+		},
+		Portal: &PortalConfig{
+			Password:           "the_password",
+			NoResetCredentials: true,
+			NoOperational:      false,
+		},
+	}
+
+	c.Assert(MustSetConfig(), check.Equals, true)
+
+	err := WriteConfig(cfg)
+	c.Assert(err, check.IsNil)
+
+	c.Assert(MustSetConfig(), check.Equals, false)
+
+	err = WriteConfig(cfg)
+	c.Assert(err, check.IsNil)
+
+	c.Assert(MustSetConfig(), check.Equals, false)
 }
 
 func (s *S) TestConfigDump(c *check.C) {
