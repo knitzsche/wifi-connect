@@ -158,11 +158,21 @@
             {{end}}
 
             <div class="row no-border">
-                <div class="p-notification" id="refreshingAlert">
+                <div class="p-notification cheshire" id="refreshingAlert">
                     <p class="p-notification__response">
                         <span class="p-notification__status">Refreshing Wi-Fi access points...</span>
                         You have been disconnected. The device is refreshing Wi-Fi access points. 
                         Please rejoin the device access point and reload this page in a minute or two.
+                    </p>
+                </div>
+            </div>
+
+            <div class="row no-border">
+                <div class="p-notification cheshire" id="savingConfigAlert">
+                    <p class="p-notification__response">
+                        <span class="p-notification__status">Saving configuration...</span>
+                        You have been disconnected. The device is saving configuration. 
+                        This takes down the device AP and disconnects you. Please reconnect in a minute or two
                     </p>
                 </div>
             </div>
@@ -180,6 +190,7 @@
     $(document).ready(function() {
         $('#grid').css('display', 'none')
         $('#refreshingAlert').css('display', 'none')
+        $('#savingConfigAlert').css('display', 'none')
         
         // enable submit password when enter is pressed for login div
         $('#passphrasePage').keydown(function(event) {
@@ -233,7 +244,7 @@
             url: "/config",
             data: {
                 Ssid: $('#ssid').val(),
-                Passprase: $('#passphrase').val(),
+                Passphrase: $('#passphrase').val(),
                 Interface:$('#interface').val(),
                 CountryCode: $('#country_code').val(),
                 Channel: $('#channel').val(),
@@ -242,7 +253,9 @@
                 ShowOperational: $('#show_operational').is(":checked")
             }
         }).done(function (response) {
-            showSsids();
+            $('#grid').css('display', 'none');
+            $('#saveConfig_error').css('display', 'none')
+            $('#savingConfigAlert').css('display', 'block')
         }).fail(function() {
             $('#saveConfig_error').css('display', 'block')
         });
