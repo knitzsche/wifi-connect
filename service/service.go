@@ -33,13 +33,12 @@ func main() {
 	cw := wifiap.DefaultClient()
 	client := daemon.GetClient()
 
-	preconfigured, errP := client.SetDefaults(cw)
-	if preconfigured {
-		fmt.Println("== wifi-connect/daemon: preconfiguration used")
-	}
-	config := client.GetConfig()
-	if errP != nil {
+	config, errP := client.SetDefaults(cw)
+	if errP != nil && config.PreConfigFile {
 		fmt.Println("== wifi-connect/daemon: preconfiguration error:", errP)
+	}
+	if config.PreConfigFile {
+		fmt.Println("== wifi-connect/daemon: preconfiguration used")
 	}
 	first := true
 	client.SetWaitFlagPath(os.Getenv("SNAP_COMMON") + "/startingApConnect")

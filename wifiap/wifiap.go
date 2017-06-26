@@ -40,8 +40,8 @@ func DefaultClient() *Client {
 	return &Client{restClient: defaultRestClient()}
 }
 
-// Wifiaper interface enables mock testing
-type Wifiaper interface {
+// Operations interface enables mock testing
+type Operations interface {
 	Show() (map[string]interface{}, error)
 	Enabled() (bool, error)
 	Enable() error

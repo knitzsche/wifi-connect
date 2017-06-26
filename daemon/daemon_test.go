@@ -176,8 +176,7 @@ func TestSetDefaults(t *testing.T) {
 		}
 	}
 	utils.SetHashFile(hfp)
-	client.SetDefaults(&mockWifiap{})
-	config := client.GetConfig()
+	config, _ := client.SetDefaults(&mockWifiap{})
 	expectedPassphrase := "abcdefghijklmnop"
 	expectedPassword := "qwerzxcv"
 	if config.Passphrase != expectedPassphrase {
@@ -204,10 +203,7 @@ func TestSetDefaults(t *testing.T) {
 		}
 	}
 	PreConfigFile = "../static/tests/pre-config1.json"
-	client.NewConfig()
-	client.SetDefaults(&mockWifiap{})
-	client.SetDefaults(&mockWifiap{})
-	config = client.GetConfig()
+	config, _ = client.SetDefaults(&mockWifiap{})
 	if len(config.Passphrase) > 0 {
 		t.Errorf("SetDefaults: Preconfig passphrase was not set but is %s", config.Passphrase)
 	}

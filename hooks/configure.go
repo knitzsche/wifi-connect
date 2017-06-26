@@ -29,24 +29,30 @@ import (
 	"launchpad.net/wifi-connect/daemon"
 )
 
+// Client is the base struct for runtime and testing
 type Client struct {
 	getter Getter
 }
 
+// Get is the test obj for overridding functions
 type Get struct{}
 
+// Getter interface is for overriding SnapGet for testing
 type Getter interface {
 	SnapGet(string) (string, error)
 }
 
+// GetClient returns a normal runtime client
 func GetClient() *Client {
 	return &Client{getter: &Get{}}
 }
 
+// GetTestClient returns a testing client
 func GetTestClient(g Getter) *Client {
 	return &Client{getter: g}
 }
 
+// SnapGet uses snapctrl to get a value fro a key, or returns error
 func (g *Get) SnapGet(key string) (string, error) {
 	out, err := exec.Command("snapctl", "get", key).Output()
 	if err != nil {
@@ -56,6 +62,7 @@ func (g *Get) SnapGet(key string) (string, error) {
 
 }
 
+// snapGetStr wraps SnapGet for string types and verifies the snap var is valid
 func (c *Client) snapGetStr(key string, target *string) {
 	val, err := c.getter.SnapGet(key)
 	if err != nil {
@@ -64,28 +71,26 @@ func (c *Client) snapGetStr(key string, target *string) {
 	if len(val) > 0 {
 		*target = val
 		return
-	} else {
-		log.Printf("== wifi-connect/configure error: key %s exists but has zero length", key)
 	}
+	log.Printf("== wifi-connect/configure error: key %s exists but has zero length", key)
 }
 
+// snapGetBool wraps SnapGet for bool types and verifies the snap var is valid
 func (c *Client) snapGetBool(key string, target *bool) {
 	val, err := c.getter.SnapGet(key)
 	if err != nil {
 		return
 	}
-	if len(val) > 0 {
-		if val == "true" {
-			*target = true
-			return
-		} else {
-			*target = false
-			return
-		}
-	} else {
+	if len(val) == 0 {
 		log.Printf("== wifi-connect/configure error: key %s exists but has zero length", key)
+		return
 	}
 
+	if val == "true" {
+		*target = true
+	} else {
+		*target = false
+	}
 }
 
 func main() {
@@ -101,7 +106,6 @@ func main() {
 		errWJ := ioutil.WriteFile(daemon.PreConfigFile, b, 0644)
 		if errWJ != nil {
 			log.Print("== wifi-connect/configure error:", errWJ)
-			return
 		}
 	}
 }
