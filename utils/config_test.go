@@ -506,6 +506,10 @@ func (s *S) TestRollbackConfigIfFailsWriting(c *check.C) {
 	mustConfigFlagFile = filepath.Join(os.TempDir(), "config_done"+randomName())
 	defer os.Remove(mustConfigFlagFile)
 
+	err := WriteFlagFile(mustConfigFlagFile)
+	c.Assert(err, check.IsNil)
+	c.Assert(MustSetConfig(), check.Equals, false)
+
 	// create a previous local config file
 	localPreviousConfig := &PortalConfig{
 		Password:           "the_previous_password",
@@ -513,7 +517,7 @@ func (s *S) TestRollbackConfigIfFailsWriting(c *check.C) {
 		NoOperational:      true,
 	}
 
-	err := writeLocalConfig(localPreviousConfig)
+	err = writeLocalConfig(localPreviousConfig)
 	c.Assert(err, check.IsNil)
 
 	// config to save
@@ -542,6 +546,8 @@ func (s *S) TestRollbackConfigIfFailsWriting(c *check.C) {
 	localCfg, err := readLocalConfig()
 	c.Assert(err, check.IsNil)
 	c.Assert(*localCfg, check.Equals, *localPreviousConfig)
+
+	// verify must set config flag is not changed in the process
 	c.Assert(MustSetConfig(), check.Equals, false)
 }
 
@@ -584,5 +590,5 @@ func (s *S) TestRollbackConfigIfFailsWriting_NoPreviousConfig(c *check.C) {
 	localCfg, err := readLocalConfig()
 	c.Assert(localCfg, check.IsNil)
 	c.Assert(err, check.IsNil)
-
+	c.Assert(MustSetConfig(), check.Equals, true)
 }
