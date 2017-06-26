@@ -214,6 +214,12 @@ var WriteConfig = func(c *Config) error {
 			if backupErr != nil {
 				return fmt.Errorf("Could not restore previous local configuration: %v", backupErr)
 			}
+		} else {
+			// if there is not exists any previous config, let's remove just written local config file
+			backupErr := os.Remove(configFile)
+			if backupErr != nil {
+				return fmt.Errorf("Could not remove temporary local config file: %v", backupErr)
+			}
 		}
 		// return error after completing backup
 		return err

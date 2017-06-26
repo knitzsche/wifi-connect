@@ -542,4 +542,47 @@ func (s *S) TestRollbackConfigIfFailsWriting(c *check.C) {
 	localCfg, err := readLocalConfig()
 	c.Assert(err, check.IsNil)
 	c.Assert(*localCfg, check.Equals, *localPreviousConfig)
+	c.Assert(MustSetConfig(), check.Equals, false)
+}
+
+func (s *S) TestRollbackConfigIfFailsWriting_NoPreviousConfig(c *check.C) {
+	configFile = filepath.Join(os.TempDir(), "config"+randomName())
+	defer os.Remove(configFile)
+
+	mustConfigFlagFile = filepath.Join(os.TempDir(), "config_done"+randomName())
+	defer os.Remove(mustConfigFlagFile)
+
+	c.Assert(MustSetConfig(), check.Equals, true)
+
+	// config to save
+	cfg := &Config{
+		Wifi: &WifiConfig{
+			Ssid:          "Ubuntu",
+			Passphrase:    "17Soj8/Sxh14lcpD",
+			Interface:     "wlp2s0",
+			CountryCode:   "0x31",
+			Channel:       6,
+			OperationMode: "g",
+		},
+		Portal: &PortalConfig{
+			Password:           "the_password",
+			NoResetCredentials: true,
+			NoOperational:      false,
+		},
+	}
+
+	// assert write fails
+	wifiapClient = &wifiapErrorClientMock{}
+	err := WriteConfig(cfg)
+	c.Assert(err, check.NotNil)
+
+	// verify no local config file remains after the error
+	_, err = os.Stat(configFile)
+	c.Assert(os.IsNotExist(err), check.Equals, true)
+
+	// verify reading local config returns nil
+	localCfg, err := readLocalConfig()
+	c.Assert(localCfg, check.IsNil)
+	c.Assert(err, check.IsNil)
+
 }
