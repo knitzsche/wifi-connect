@@ -49,6 +49,7 @@ parts:
   assets:
     plugin: dump
     source: .
+    prepare: ../../../snap/scriptlets/fill_country_codes.sh
     stage:
       - static
 

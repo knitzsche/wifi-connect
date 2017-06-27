@@ -98,7 +98,9 @@
                     <label for="interface">Interface:</label>
                     <input type="text" id="interface" required="required" value="{{.Config.Wifi.Interface}}" placeholder="Enter network interface"/>
                     <label for="country_code">Country Code:</label>
-                    <input type="text" id="country_code" value="{{.Config.Wifi.CountryCode}}" placeholder="Enter Wi-Fi country code"/>
+                    <select id="country_code">
+                        [COUNTRY_CODE_OPTIONS]
+                    </select>
                     <label for="channel">Channel:</label>
                     <select id="channel">
                         <option value="1">1</option>
@@ -201,11 +203,26 @@
         });
 
         {{if eq .Page "config"}}
-            // config specific actions
-            $('select').find('option[value={{.Config.Wifi.Channel}}]').attr('selected', 'selected')
+            // config specific initial values for checkboxes and combo boxes
+            $('#channel').val('{{.Config.Wifi.Channel}}')
+            $('#country_code').val('{{.Config.Wifi.CountryCode}}')
             $('#show_operational').prop('checked', !{{.Config.Portal.NoOperational}})
         {{end}}
+
+        // country codes select must be sorted as originally it is, but by value, not by text
+        sortCountryCodes();
 	})
+    function sortCountryCodes() {
+        var cc_options = $("#country_code option");
+        var selected = $("#country_code").val();
+
+        cc_options.sort(function(a,b) {
+            return a.text.localeCompare(b.text)
+        })
+
+        $("#country_code").empty().append(cc_options);
+        $("#country_code").val(selected);
+    }
 	function showSsids() {
 	    $('#login').css('display', 'none'); 
 	    $('#grid').css('display', 'block');
