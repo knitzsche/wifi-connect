@@ -48,13 +48,13 @@ var PreConfigFile = filepath.Join(os.Getenv("SNAP_COMMON"), "pre-config.json")
 
 // PreConfig is the struct representing a configuration
 type PreConfig struct {
-	PreConfigFile bool   `json:"config.file,omitempty"`
-	Passphrase    string `json:"wifi.security-passphrase,omitempty"`
-	Ssid          string `json:"wifi.ssid,omitempty"`
-	Interface     string `json:"wifi.interface,omitempty"`
-	Password      string `json:"portal.password,omitempty"`
-	NoOperational bool   `json:"portal.no-operational,omitempty"` //whether to show the operational portal
-	NoResetCreds  bool   `json:"portal.no-reset-creds,omitempty"` //whether user must reset passphrase and password on first use of mgmt portal
+	PreConfigFileExists bool   `json:"config.file,omitempty"`
+	Passphrase          string `json:"wifi.security-passphrase,omitempty"`
+	Ssid                string `json:"wifi.ssid,omitempty"`
+	Interface           string `json:"wifi.interface,omitempty"`
+	Password            string `json:"portal.password,omitempty"`
+	NoOperational       bool   `json:"portal.no-operational,omitempty"` //whether to show the operational portal
+	NoResetCreds        bool   `json:"portal.no-reset-creds,omitempty"` //whether user must reset passphrase and password on first use of mgmt portal
 }
 
 // Client is the base type for both testing and runtime
@@ -210,10 +210,10 @@ func (c *Client) OperationalServerDown() {
 // configuration file, if any. The configuration is returned with an error. PreConfig.PreConfigfile
 // indicates whether a pre-config file exists.
 func (c *Client) SetDefaults(cw wifiap.Operations) (*PreConfig, error) {
-	config := &PreConfig{PreConfigFile: true}
+	config := &PreConfig{PreConfigFileExists: true}
 	content, err := ioutil.ReadFile(PreConfigFile)
 	if err != nil {
-		config.PreConfigFile = false
+		config.PreConfigFileExists = false
 	}
 	err = json.Unmarshal(content, config)
 	if err != nil {
