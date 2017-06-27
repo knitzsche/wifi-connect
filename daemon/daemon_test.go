@@ -100,8 +100,6 @@ func TestManualMode(t *testing.T) {
 
 type mockWifiap struct{}
 
-//var wifiapClient wifiapInterface
-
 func (mock *mockWifiap) Do(req *http.Request) (*http.Response, error) {
 	fmt.Println("==== MY do called")
 	url := req.URL.String()
