@@ -1,13 +1,26 @@
 #!/bin/sh
-# The purpose of this script is taking ISO-3166 country codes in a dynamic way
-# so that if they change, they can be updated when snap is built
+# The purpose of this script is taking ISO-3166 country codes from country_code file
+# so that they can be updated in management portal when snap is built
 # Process is easy, get it from remote path, format using sed, and replace 
 # html page were they will be used
 
 set -e 
 
-# get remote country codes
-curl -X GET http://geotags.com/iso3166/countries.html > country-codes
+COUNTRY_CODES=../../../snap/scriptlets/country-codes
+
+if [ ! -e $COUNTRY_CODES ]; then
+    echo "======================================================="
+    echo "Could not find country_codes needed file for compiling."
+    echo "Please, before building snap for the first time execute by hand:"
+    echo ""
+    echo "snap/scriptlets/fetch_country_codes.sh"
+    echo ""
+    echo "======================================================="
+    exit 1
+fi
+
+# think that this is a scriptlet, executed in parts/<the_part>/build folder
+cp $COUNTRY_CODES .
 
 # remove non processable lines
 sed -i '/^<a href=iso/!d' country-codes
