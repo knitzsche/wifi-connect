@@ -25,6 +25,11 @@ import (
 	"time"
 )
 
+const (
+	minPassphraseLen int = 8
+	maxPassphraseLen int = 63
+)
+
 // Client struct exposing wifi-ap operations
 type Client struct {
 	restClient *RestClient
@@ -173,10 +178,10 @@ func (client *Client) SetSsid(ssid string) error {
 
 // SetPassphrase sets the credential to access the wifi ap
 func (client *Client) SetPassphrase(passphrase string) error {
-	if len(passphrase) < 8 {
+	if len(passphrase) < minPassphraseLen {
 		return fmt.Errorf("Passphrase must be at least 8 chars in length. Please try again")
 	}
-	if len(passphrase) > 63 {
+	if len(passphrase) > maxPassphraseLen {
 		return fmt.Errorf("Passphrase must be less than 64 long. Please try again")
 	}
 
