@@ -293,7 +293,7 @@ management portal won't show config page to modify it.
 ## Country codes
 
 Country codes available in config page select input field are injected from a file
-stored at snap/scriptlets/country_codes. This is generated dinamically by exec:
+stored at snap/scriptlets/country-codes. This is generated dinamically by exec:
 
 ```
 snap/scriptlets/fetch_country_codes.sh
