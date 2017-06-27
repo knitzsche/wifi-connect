@@ -163,6 +163,25 @@ func (mock *mockWifiap) SetPassphrase(p string) error {
 	return nil
 }
 
+func TestLoadPreConfig(t *Testing) {
+	client := GetClient()
+	PreConfigFile = "../static/tests/pre-config0.json"
+	config, err := LoadPreConfig()
+	if err != nil {
+		t.Errorf("Unexpected error using  LoadPreConfig:", err)
+	}
+	if config.Passphrase != "abcdefghijklmnop" {
+		t.Errorf("Passphrase of %s expected but got %s:", "abcdefghijklmnop", config.Passphrase)
+	}
+	if !config.no - operational {
+		t.Errorf("portal.no-operational was set to true but the loaded config is %t", config.NoOperational)
+	}
+	if !config.no - reset - creds {
+		t.Errorf("portal.no-reset-creds was set to true but the loaded config is %t", config.NoResetCreds)
+	}
+
+}
+
 func TestSetDefaults(t *testing.T) {
 	client := GetClient()
 	PreConfigFile = "../static/tests/pre-config0.json"

@@ -48,13 +48,12 @@ var PreConfigFile = filepath.Join(os.Getenv("SNAP_COMMON"), "pre-config.json")
 
 // PreConfig is the struct representing a configuration
 type PreConfig struct {
-	PreConfigFileExists bool   `json:"config.file,omitempty"`
-	Passphrase          string `json:"wifi.security-passphrase,omitempty"`
-	Ssid                string `json:"wifi.ssid,omitempty"`
-	Interface           string `json:"wifi.interface,omitempty"`
-	Password            string `json:"portal.password,omitempty"`
-	NoOperational       bool   `json:"portal.no-operational,omitempty"` //whether to show the operational portal
-	NoResetCreds        bool   `json:"portal.no-reset-creds,omitempty"` //whether user must reset passphrase and password on first use of mgmt portal
+	Passphrase    string `json:"wifi.security-passphrase,omitempty"`
+	Ssid          string `json:"wifi.ssid,omitempty"`
+	Interface     string `json:"wifi.interface,omitempty"`
+	Password      string `json:"portal.password,omitempty"`
+	NoOperational bool   `json:"portal.no-operational,omitempty"` //whether to show the operational portal
+	NoResetCreds  bool   `json:"portal.no-reset-creds,omitempty"` //whether user must reset passphrase and password on first use of mgmt portal
 }
 
 // Client is the base type for both testing and runtime
@@ -206,18 +205,28 @@ func (c *Client) OperationalServerDown() {
 	}
 }
 
-// SetDefaults creates the run time configuration based on wifi-ap and the pre-config.json
-// configuration file, if any. The configuration is returned with an error. PreConfig.PreConfigfile
-// indicates whether a pre-config file exists.
-func (c *Client) SetDefaults(cw wifiap.Operations) (*PreConfig, error) {
-	config := &PreConfig{PreConfigFileExists: true}
+// LoadPreConfig returns a PreConfig based on the pre-config.json, if present, and an error to indicate
+// possible json unmarshal failure
+func LoadPreConfig() (*PreConfig, error) {
+	config := &PreConfig{}
 	content, err := ioutil.ReadFile(PreConfigFile)
-	if err != nil {
-		config.PreConfigFileExists = false
+	if err == nil {
+		fmt.Println("== wifi-connect/daemon: preconfiguration file found")
 	}
 	err = json.Unmarshal(content, config)
 	if err != nil {
 		return config, err
+	}
+	return config, nil
+}
+
+// SetDefaults creates the run time configuration based on wifi-ap and the pre-config.json
+// configuration file, if any. The configuration is returned with an error. PreConfig.PreConfigfile
+// indicates whether a pre-config file exists.
+func (c *Client) SetDefaults(cw wifiap.Operations) (*PreConfig, error) {
+	config, err := LoadPreConfig()
+	if err != nil {
+		fmt.Println("== wifi-connect/daemon/SetDefaults: preconfig unmarshall errorr:", err)
 	}
 	ap, errShow := cw.Show()
 	if errShow != nil {
