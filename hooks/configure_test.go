@@ -36,7 +36,7 @@ type Config struct {
 }
 
 func TestSnapGetStr0(t *testing.T) {
-	c := GetTestClient(&mock0{})
+	c := ModClient(&mock0{})
 	config := &Config{}
 	config.AString = "defaultstring"
 	c.snapGetStr("key", &config.AString)
@@ -52,7 +52,7 @@ func (mock *mock1) SnapGet(s string) (string, error) {
 }
 
 func TestSnapGetStr1(t *testing.T) {
-	c := GetTestClient(&mock1{})
+	c := ModClient(&mock1{})
 	config := &Config{}
 	config.AString = "defaultstring"
 	c.snapGetStr("key", &config.AString)
@@ -68,7 +68,7 @@ func (mock *mock2) SnapGet(s string) (string, error) {
 }
 
 func TestSnapGetBool0(t *testing.T) {
-	c := GetTestClient(&mock2{})
+	c := ModClient(&mock2{})
 	config := &Config{}
 	config.ABool = false
 	c.snapGetBool("key", &config.ABool)
@@ -84,7 +84,7 @@ func (mock *mock3) SnapGet(s string) (string, error) {
 }
 
 func TestSnapGetBool1(t *testing.T) {
-	c := GetTestClient(&mock3{})
+	c := ModClient(&mock3{})
 	config := &Config{}
 	config.ABool = true
 	c.snapGetBool("key", &config.ABool)
@@ -100,7 +100,7 @@ func (mock *mock4) SnapGet(s string) (string, error) {
 }
 
 func TestSnapGetBool2(t *testing.T) {
-	c := GetTestClient(&mock4{})
+	c := ModClient(&mock4{})
 	config := &Config{}
 	config.ABool = true
 	c.snapGetBool("key", &config.ABool)

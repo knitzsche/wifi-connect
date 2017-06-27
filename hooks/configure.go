@@ -47,12 +47,12 @@ func GetClient() *Client {
 	return &Client{getter: &Get{}}
 }
 
-// GetTestClient returns a testing client
-func GetTestClient(g Getter) *Client {
+// ModClient returns a testing client
+func ModClient(g Getter) *Client {
 	return &Client{getter: g}
 }
 
-// SnapGet uses snapctrl to get a value fro a key, or returns error
+// SnapGet uses snapctrl to get a value from a key, or returns error
 func (g *Get) SnapGet(key string) (string, error) {
 	out, err := exec.Command("snapctl", "get", key).Output()
 	if err != nil {
@@ -68,11 +68,11 @@ func (c *Client) snapGetStr(key string, target *string) {
 	if err != nil {
 		return
 	}
-	if len(val) > 0 {
-		*target = val
+	if len(val) == 0 {
+		log.Printf("== wifi-connect/configure error: key %s exists but has zero length", key)
 		return
 	}
-	log.Printf("== wifi-connect/configure error: key %s exists but has zero length", key)
+	*target = val
 }
 
 // snapGetBool wraps SnapGet for bool types and verifies the snap var is valid
