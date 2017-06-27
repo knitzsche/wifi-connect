@@ -206,11 +206,6 @@ func (c *Client) OperationalServerDown() {
 	}
 }
 
-// NewConfig makes a new preconfiguration - use ONLY for testing
-func (c *Client) NewConfig() *PreConfig {
-	return &PreConfig{}
-}
-
 // SetDefaults creates the run time configuration based on wifi-ap and the pre-config.json
 // configuration file, if any. The configuration is returned with an error. PreConfig.PreConfigfile
 // indicates whether a pre-config file exists.
