@@ -73,15 +73,17 @@ func execTemplate(w http.ResponseWriter, templatePath string, data Data) {
 	templateAbsPath := filepath.Join(ResourcesPath, templatePath)
 	t, err := template.ParseFiles(templateAbsPath)
 	if err != nil {
-		fmt.Printf("== wifi-connect/handler: Error loading the template at %v : %v\n", templatePath, err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		msg := fmt.Sprintf("== wifi-connect/handler: Error loading the template at %v : %v", templatePath, err)
+		log.Println(msg)
+		http.Error(w, msg, http.StatusInternalServerError)
 		return
 	}
 
 	err = t.Execute(w, data)
 	if err != nil {
-		fmt.Printf("== wifi-connect/handler: Error executing the template at %v : %v\n", templatePath, err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		msg := fmt.Sprintf("== wifi-connect/handler: Error executing the template at %v : %v", templatePath, err)
+		log.Println(msg)
+		http.Error(w, msg, http.StatusInternalServerError)
 		return
 	}
 }
@@ -93,8 +95,9 @@ func ManagementHandler(w http.ResponseWriter, r *http.Request) {
 
 		config, err := utils.ReadConfig()
 		if err != nil {
-			log.Printf("Error reading configuration: %v\n", err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			msg := fmt.Sprintf("Error reading configuration: %v", err)
+			log.Println(msg)
+			http.Error(w, msg, http.StatusInternalServerError)
 			return
 		}
 
@@ -107,8 +110,9 @@ func ManagementHandler(w http.ResponseWriter, r *http.Request) {
 
 	ssids, err := utils.ReadSsidsFile()
 	if err != nil {
-		fmt.Printf("== wifi-connect/handler: Error reading SSIDs file: %v\n", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		msg := fmt.Sprintf("== wifi-connect/handler: Error reading SSIDs file: %v", err)
+		log.Println(msg)
+		http.Error(w, msg, http.StatusInternalServerError)
 		return
 	}
 
@@ -120,8 +124,9 @@ func SaveConfigHandler(w http.ResponseWriter, r *http.Request) {
 	// read previous config
 	config, err := utils.ReadConfig()
 	if err != nil {
-		log.Printf("Error reading previous stored config: %v", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		msg := fmt.Sprintf("Error reading previous stored config: %v", err)
+		log.Println(msg)
+		http.Error(w, msg, http.StatusInternalServerError)
 		return
 	}
 
@@ -133,16 +138,18 @@ func SaveConfigHandler(w http.ResponseWriter, r *http.Request) {
 	config.Wifi.CountryCode = utils.ParseFormParamSingleValue(r.Form, "CountryCode")
 	config.Wifi.Channel, err = strconv.Atoi(utils.ParseFormParamSingleValue(r.Form, "Channel"))
 	if err != nil {
-		log.Printf("Error parsing channel form value: %v", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		msg := fmt.Sprintf("Error parsing channel form value: %v", err)
+		log.Println(msg)
+		http.Error(w, msg, http.StatusInternalServerError)
 		return
 	}
 	config.Wifi.OperationMode = utils.ParseFormParamSingleValue(r.Form, "OperationalMode")
 	config.Portal.Password = utils.ParseFormParamSingleValue(r.Form, "PortalPassword")
 	showOperational, err := strconv.ParseBool(utils.ParseFormParamSingleValue(r.Form, "ShowOperational"))
 	if err != nil {
-		log.Printf("Error parsing show operational form value: %v", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		msg := fmt.Sprintf("Error parsing show operational form value: %v", err)
+		log.Println(msg)
+		http.Error(w, msg, http.StatusInternalServerError)
 		return
 	}
 	// as form received value is 'show_operational', config stored value is the opposite
@@ -150,16 +157,18 @@ func SaveConfigHandler(w http.ResponseWriter, r *http.Request) {
 
 	err = utils.WriteConfig(config)
 	if err != nil {
-		log.Printf("Error saving config: %v", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		msg := fmt.Sprintf("Error saving config: %v", err)
+		log.Println(msg)
+		http.Error(w, msg, http.StatusInternalServerError)
 		return
 	}
 
 	//after saving config, redirect to management portal, showing available ssids
 	ssids, err := utils.ReadSsidsFile()
 	if err != nil {
-		fmt.Printf("== wifi-connect/handler: Error reading SSIDs file: %v\n", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		msg := fmt.Sprintf("== wifi-connect/handler: Error reading SSIDs file: %v\n", err)
+		log.Println(msg)
+		http.Error(w, msg, http.StatusInternalServerError)
 		return
 	}
 
@@ -178,7 +187,9 @@ func ConnectHandler(w http.ResponseWriter, r *http.Request) {
 
 	ssids := r.Form["ssid"]
 	if len(ssids) == 0 {
-		log.Print(Sprintf("SSID not available"))
+		msg := "SSID not available"
+		log.Println(msg)
+		http.Error(w, msg, http.StatusBadRequest)
 		return
 	}
 	ssid := ssids[0]
@@ -187,12 +198,13 @@ func ConnectHandler(w http.ResponseWriter, r *http.Request) {
 	execTemplate(w, connectingTemplatePath, data)
 
 	go func() {
-		log.Print(Sprintf("Connecting to %v\n", ssid))
+		log.Println(Sprintf("Connecting to %v", ssid))
 
 		err := wifiapClient.Disable()
 		if err != nil {
-			log.Print(Sprintf("Error disabling AP: %v\n", err))
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			msg := fmt.Sprintf("Error disabling AP: %v\n", err)
+			log.Println(msg)
+			http.Error(w, msg, http.StatusInternalServerError)
 			return
 		}
 
@@ -203,8 +215,9 @@ func ConnectHandler(w http.ResponseWriter, r *http.Request) {
 		err = netmanClient.ConnectAp(ssid, pwd, ap2device, ssid2ap)
 		//TODO signal user in portal on failure to connect
 		if err != nil {
-			log.Print(Sprintf("Failed connecting to %v.\n", ssid))
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			msg := fmt.Sprintf("Failed connecting to %v", ssid)
+			log.Println(msg)
+			http.Error(w, msg, http.StatusInternalServerError)
 			return
 		}
 
