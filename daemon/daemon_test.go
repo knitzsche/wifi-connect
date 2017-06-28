@@ -163,20 +163,19 @@ func (mock *mockWifiap) SetPassphrase(p string) error {
 	return nil
 }
 
-func TestLoadPreConfig(t *Testing) {
-	client := GetClient()
+func TestLoadPreConfig(t *testing.T) {
 	PreConfigFile = "../static/tests/pre-config0.json"
 	config, err := LoadPreConfig()
 	if err != nil {
-		t.Errorf("Unexpected error using  LoadPreConfig:", err)
+		t.Errorf("Unexpected error using LoadPreConfig: %s", err)
 	}
 	if config.Passphrase != "abcdefghijklmnop" {
 		t.Errorf("Passphrase of %s expected but got %s:", "abcdefghijklmnop", config.Passphrase)
 	}
-	if !config.no - operational {
+	if !config.NoOperational {
 		t.Errorf("portal.no-operational was set to true but the loaded config is %t", config.NoOperational)
 	}
-	if !config.no - reset - creds {
+	if !config.NoResetCreds {
 		t.Errorf("portal.no-reset-creds was set to true but the loaded config is %t", config.NoResetCreds)
 	}
 
@@ -192,8 +191,9 @@ func TestSetDefaults(t *testing.T) {
 			t.Errorf("Could not remove previous file version")
 		}
 	}
+	config, _ := LoadPreConfig()
 	utils.SetHashFile(hfp)
-	config, _ := client.SetDefaults(&mockWifiap{})
+	client.SetDefaults(&mockWifiap{}, config)
 	expectedPassphrase := "abcdefghijklmnop"
 	expectedPassword := "qwerzxcv"
 	if config.Passphrase != expectedPassphrase {
@@ -220,7 +220,8 @@ func TestSetDefaults(t *testing.T) {
 		}
 	}
 	PreConfigFile = "../static/tests/pre-config1.json"
-	config, _ = client.SetDefaults(&mockWifiap{})
+	config, _ = LoadPreConfig()
+	client.SetDefaults(&mockWifiap{}, config)
 	if len(config.Passphrase) > 0 {
 		t.Errorf("SetDefaults: Preconfig passphrase was not set but is %s", config.Passphrase)
 	}

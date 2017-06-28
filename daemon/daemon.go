@@ -223,8 +223,7 @@ func LoadPreConfig() (*PreConfig, error) {
 // SetDefaults creates the run time configuration based on wifi-ap and the pre-config.json
 // configuration file, if any. The configuration is returned with an error. PreConfig.PreConfigfile
 // indicates whether a pre-config file exists.
-func (c *Client) SetDefaults(cw wifiap.Operations) (*PreConfig, error) {
-	config, err := LoadPreConfig()
+func (c *Client) SetDefaults(cw wifiap.Operations, config *PreConfig) error {
 	if err != nil {
 		fmt.Println("== wifi-connect/daemon/SetDefaults: preconfig unmarshall errorr:", err)
 	}
@@ -238,7 +237,7 @@ func (c *Client) SetDefaults(cw wifiap.Operations) (*PreConfig, error) {
 			fmt.Println("== wifi-connect/SetDefaults wifi-ap passphrase being set")
 			if err != nil {
 				fmt.Println("== wifi-connect/daemon/SetDefaults: passphrase err:", err)
-				return config, err
+				return err
 			}
 		}
 	}
@@ -247,7 +246,7 @@ func (c *Client) SetDefaults(cw wifiap.Operations) (*PreConfig, error) {
 		_, err = utils.HashIt(config.Password)
 		if err != nil {
 			fmt.Println("== wifi-connect/daemon/SetDefaults: password err:", err)
-			return config, err
+			return err
 		}
 	}
 	if config.NoOperational {
@@ -256,5 +255,5 @@ func (c *Client) SetDefaults(cw wifiap.Operations) (*PreConfig, error) {
 	if config.NoResetCreds {
 		fmt.Println("== wifi-connect/SetDefaults: reset creds requirement is now disabled")
 	}
-	return config, nil
+	return nil
 }

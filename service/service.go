@@ -33,9 +33,13 @@ func main() {
 	cw := wifiap.DefaultClient()
 	client := daemon.GetClient()
 
-	config, err := client.SetDefaults(cw)
+	config, err := daemon.LoadPreConfig()
 	if err != nil {
 		fmt.Println("== wifi-connect/daemon: preconfiguration error:", err)
+	}
+	err = client.SetDefaults(cw, config)
+	if err != nil {
+		fmt.Println("== wifi-connect/daemon: SetDetaults error:", err)
 	}
 	first := true
 	client.SetWaitFlagPath(os.Getenv("SNAP_COMMON") + "/startingApConnect")
