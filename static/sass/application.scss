@@ -19,3 +19,10 @@
 .cheshire {
   display: none;
 }
+
+.required label:after {
+  color: #e32;
+  content: ' *';
+  display:inline;
+}
+

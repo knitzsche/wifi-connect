@@ -77,13 +77,19 @@
             {{else if eq .Page "config"}}
             <div class="row no-border" id="grid">
                 <h2>First configuration</h2>
-               
+                <br/>
                 <fieldset>
-                    <h4>Access Point</h4>
-                    
-                    <label for="ssid">SSID:</label>
-                    <input type="text" id="ssid" required="required" value="{{.Config.Wifi.Ssid}}" placeholder="Enter SSID"/>
-                    <div class="p-form-validation" id="passphrase_form">
+                    <h4>Wi-Fi Access Point</h4>
+                    <div class="p-form-validation" id="ssid_form">
+                        <label for="ssid">SSID:</label>
+                        <input class="p-form-validation__input" type="text" id="ssid" required="required" value="{{.Config.Wifi.Ssid}}" placeholder="Enter SSID"/>
+                    </div>
+                    <div class="p-notification--negative cheshire" id="ssid_error">
+                        <p class="p-notification__response">
+                            <span class="p-notification__status">Error:</span> <text id="ssid_error_msg"></text>
+                        </p>
+                    </div>
+                    <div class="p-form-validation required" id="passphrase_form">
                         <label for="passphrase">Passphrase:</label>
                         <input class="p-form-validation__input" type="password" id="passphrase" required="required" onblur="validate_password(this.id,'Passphrase',8,63)" value="{{.Config.Wifi.Passphrase}}" placeholder="Enter passphrase"/>
                         <label for="passphrase_confirm">Confirm passphrase:</label>
@@ -94,8 +100,15 @@
                             <span class="p-notification__status">Error:</span> <text id="passphrase_error_msg"></text>
                         </p>
                     </div>
-                    <label for="interface">Interface:</label>
-                    <input type="text" id="interface" required="required" value="{{.Config.Wifi.Interface}}" placeholder="Enter network interface"/>
+                    <div class="p-form-validation" id="interface_form">
+                        <label for="interface">Interface:</label>
+                        <input type="text" id="interface" required="required" value="{{.Config.Wifi.Interface}}" placeholder="Enter network interface"/>
+                    </div>
+                    <div class="p-notification--negative cheshire" id="interface_error">
+                        <p class="p-notification__response">
+                            <span class="p-notification__status">Error:</span> <text id="interface_error_msg"></text>
+                        </p>
+                    </div>
                     <label for="country_code">Country Code:</label>
                     <select id="country_code">
                         [COUNTRY_CODE_OPTIONS]
@@ -129,8 +142,8 @@
                 <br/>
                 
                 <fieldset>
-                    <h4>Portal</h4>
-                    <div class="p-form-validation" id="portal_pwd_form">
+                    <h4>Web Portal</h4>
+                    <div class="p-form-validation required" id="portal_pwd_form">
                         <label for="portal_pwd">Portal password:</label>
                         <input class="p-form-validation__input" type="password" id="portal_pwd" required="required" value="{{.Config.Portal.Password}}" onblur="validate_password(this.id,'Portal password',8)"/>
                         <label for="portal_pwd_confirm">Confirm portal password:</label>
@@ -148,7 +161,7 @@
                 <div class="p-notification--caution">
                     <p class="p-notification__response">
                         <span class="p-notification__status">Warning:</span>
-                        This takes down the device AP and disconnects you. Please reconnect in a minute or two
+                        This may take down the device Wi-Fi AP and disconnect you. Please reconnect in a minute or two
                     </p>
                     <br/>
                     <button class="p-button--positive" onclick="saveConfig()">Apply configuration</button>
@@ -252,11 +265,36 @@
         })
 	}    
     function saveConfig() {
+        if ($('#ssid').val().length == 0) {
+            $('#ssid_form').addClass('is-error')
+            $('#ssid_error_msg').text('SSID cannot be empty')
+            $('#ssid_error').css('display', 'block')
+            $('#saveConfig_error').css('display', 'block')
+            $('#saveConfig_error_msg').text('Please, correct SSID field error before applying configuration')
+            return
+        } else {
+            $('#ssid_form').removeClass('is-error')
+            $('#ssid_error').css('display', 'none')
+        }
+
         if (!validate_password('passphrase', 'Passphrase', 8, 63)) {
             $('#saveConfig_error').css('display', 'block')
             $('#saveConfig_error_msg').text('Please, correct Wi-Fi passphrase error before applying configuration')
             return
         }
+
+        if ($('#interface').val().length == 0) {
+            $('#interface_form').addClass('is-error')
+            $('#interface_error_msg').text('Interface cannot be empty')
+            $('#interface_error').css('display', 'block')
+            $('#saveConfig_error').css('display', 'block')
+            $('#saveConfig_error_msg').text('Please, correct Wi-Fi interface error before applying configuration')
+            return
+        } else {
+            $('#interface_form').removeClass('is-error')
+            $('#interface_error').css('display', 'none')
+        }
+
         if (!validate_password('portal_pwd', 'Portal password', 8)) {
             $('#saveConfig_error').css('display', 'block')
             $('#saveConfig_error_msg').text('Please, correct Portal password error before applying configuration')

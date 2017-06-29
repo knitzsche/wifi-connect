@@ -188,23 +188,26 @@ var ReadConfig = func() (*Config, error) {
 
 // WriteConfig writes all remote and local config at the same time
 var WriteConfig = func(c *Config) error {
-	remoteConfigBackup, err := readRemoteConfig()
+	previousRemoteConfig, err := readRemoteConfig()
 	if err != nil {
-		return fmt.Errorf("Error reading current config before applying new one: %v", err)
+		return fmt.Errorf("Error reading current remote config before applying new one: %v", err)
 	}
 
-	err = writeRemoteConfig(c.Wifi)
-	if err != nil {
-		// if an error happens writing remote config there is no need to restore
-		// backup, as nothing shouldn't have been written
-		return err
+	// only write remote config if it's different from current
+	if *previousRemoteConfig != *c.Wifi {
+		err = writeRemoteConfig(c.Wifi)
+		if err != nil {
+			// if an error happens writing remote config there is no need to restore
+			// backup, as nothing shouldn't have been written
+			return err
+		}
 	}
 
 	err = writeLocalConfig(c.Portal)
 	if err != nil {
 		// rollback
-		if remoteConfigBackup != nil {
-			backupErr := writeRemoteConfig(remoteConfigBackup)
+		if previousRemoteConfig != nil {
+			backupErr := writeRemoteConfig(previousRemoteConfig)
 			if backupErr != nil {
 				return fmt.Errorf("Could not restore previous remote configuration: %v\n after error: %v", backupErr, err)
 			}
