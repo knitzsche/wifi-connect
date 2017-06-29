@@ -267,40 +267,43 @@ sudo  wifi-connect start
 
 # Configuration
 
-The first time one access management portal a configuration page is shown. In there, one can set and save needed information for wifi-ap and portals work as desired.
-That configuration is composed of one first section for Wi-Fi ones and another
-second section for portal
+First time one access management portal a configuration page is shown. Once there, settings for Wi-Fi access point and portals password can be saved.
+That configuration is composed of one first section for Wi-Fi ones and another second for portal
 
-Wi-Fi config:
-* SSID: of the access point
-* Passphrase: password to connect to access point
-* Interface: network interface where access point must be brought up
-* Country Code: ISO-3166 two digits code to use in Wi-Fi
-* Channel: Wi-Fi channel
-* Operation Mode: Wi-Fi operation mode
+*Wi-Fi config*:
+| Config Key     | Description |
+|----------------|-------------|
+| SSID           | of the access point |
+| Passphrase     | password to connect to access point |
+| Interface      | network interface where access point must be brought up |
+| Country Code   | ISO-3166 two digits code to use in Wi-Fi |
+| Channel        | Wi-Fi channel |
+| Operation Mode | Wi-Fi operation mode |
 
-Portal config:
-* Password: to access any of management or operational portals
-* Show operational portal: checkbox to bring up or not operational portal when connected to any external Wi-Fi
+*Portal config*:
+| Config Key     | Description |
+|----------------|-------------|
+| Password       | to access any of management or operational portals |
 
-After filling fields there is a button to apply configuration. While configuration
-is being saved a different page will inform about changes are in process to be saved. After some small seconds you should be able to reconnect to AP in order to 
-see regular management page showing available ssids.
+There is a button to apply configuration just below the input fields. While configuration
+is being saved a different page will inform about changes are in process to be saved. After small delay one 
+should be able to reconnect to AP in order to see regular management page showing available ssids.
 
 NOTE: If there is any previous config file at $SNAP_COMMON/config.json containining 'portal.no-reset-creds' key with value true, first time accessing
 management portal won't show config page to modify it.
 
 ## Country codes
 
-Country codes available in config page select input field are injected from a file
-stored at snap/scriptlets/country-codes. This is generated dinamically by exec:
+There is a combo box in config page to select the country code to use in the access point.
+Its values are injected in compilation time from a file stored at snap/scriptlets/country-codes. 
+This file is generated dynamically when executed by hand this script:
 
 ```
 snap/scriptlets/fetch_country_codes.sh
 ```
 
-every time you want to update country codes to last ones, you have to execute
-that script and rebuild and install snap
+So, every time you want to update country codes to most recent ones, you have to execute
+that script by hand and, after success, rebuild and install snap
 
 # Tests
 ## Unit Tests
