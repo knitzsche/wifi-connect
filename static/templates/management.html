@@ -118,7 +118,12 @@
                         <option value="14">14</option>
                     </select>
                     <label for="operation_mode">Operation mode:</label>
-                    <input type="text" id="operation_mode" value="{{.Config.Wifi.OperationMode}}" placeholder="Enter operation mode"/>
+                    <select id="operation_mode">
+                        <option value="a">IEEE 802.11a (5 GHz)</option>
+                        <option value="b">IEEE 802.11b (2.4 GHz)</option>
+                        <option value="g">IEEE 802.11g (2.4 GHz)</option>
+                        <option value="ad">IEEE 802.11ad (60 GHz)</option>
+                    </select>
                 </fieldset>
 
                 <br/>
@@ -150,7 +155,7 @@
                 </div>
                 <div class="p-notification--negative cheshire" id="saveConfig_error">
                     <p class="p-notification__response">
-                        <span class="p-notification__status">Error:</span>Could not save configuration. Server error.
+                        <span class="p-notification__status">Error:</span><text id="saveConfig_error_msg">Could not save configuration. Server error.</text>
                     </p>
                 </div>
             </div>
@@ -200,10 +205,10 @@
         });
 
         {{if eq .Page "config"}}
-            // config specific initial values for checkboxes and combo boxes
+            // config specific initial values for combo boxes
             $('#channel').val('{{.Config.Wifi.Channel}}')
             $('#country_code').val('{{.Config.Wifi.CountryCode}}')
-            $('#show_operational').prop('checked', !{{.Config.Portal.NoOperational}})
+            $('operation_mode').val('{{.Config.Wifi.OperationMode}}')
         {{end}}
 
         // country codes select must be sorted as originally it is, but by value, not by text
@@ -269,8 +274,13 @@
             $('#grid').css('display', 'none');
             $('#saveConfig_error').css('display', 'none')
             $('#savingConfigAlert').css('display', 'block')
-        }).fail(function() {
+        }).error(function(xhr, error) {
+            err = JSON.parse(xhr.responseText);
+            //TODO TRACE
+            console.log("ERR:"+ err)
+
             $('#saveConfig_error').css('display', 'block')
+            $('#saveConfig_error_msg').text('Could not save configuration. Server error: ' + err)
         });
     }
     function capitalizeFirstLetter(str) {
