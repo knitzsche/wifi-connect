@@ -143,17 +143,8 @@ func SaveConfigHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, msg, http.StatusInternalServerError)
 		return
 	}
-	config.Wifi.OperationMode = utils.ParseFormParamSingleValue(r.Form, "OperationalMode")
+	config.Wifi.OperationMode = utils.ParseFormParamSingleValue(r.Form, "OperationMode")
 	config.Portal.Password = utils.ParseFormParamSingleValue(r.Form, "PortalPassword")
-	showOperational, err := strconv.ParseBool(utils.ParseFormParamSingleValue(r.Form, "ShowOperational"))
-	if err != nil {
-		msg := fmt.Sprintf("Error parsing show operational form value: %v", err)
-		log.Println(msg)
-		http.Error(w, msg, http.StatusInternalServerError)
-		return
-	}
-	// as form received value is 'show_operational', config stored value is the opposite
-	config.Portal.NoOperational = !showOperational
 
 	err = utils.WriteConfig(config)
 	if err != nil {

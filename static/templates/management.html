@@ -77,8 +77,7 @@
             {{else if eq .Page "config"}}
             <div class="row no-border" id="grid">
                 <h2>First configuration</h2>
-                <h5>You need to set these config values before continuing:</h5>
-                
+               
                 <fieldset>
                     <h4>Access Point</h4>
                     
@@ -86,9 +85,9 @@
                     <input type="text" id="ssid" required="required" value="{{.Config.Wifi.Ssid}}" placeholder="Enter SSID"/>
                     <div class="p-form-validation" id="passphrase_form">
                         <label for="passphrase">Passphrase:</label>
-                        <input class="p-form-validation__input" type="password" id="passphrase" required="required" onblur="validate_password(this.id, 13)" value="{{.Config.Wifi.Passphrase}}" placeholder="Enter passphrase"/>
+                        <input class="p-form-validation__input" type="password" id="passphrase" required="required" onblur="validate_password(this.id,8,63)" value="{{.Config.Wifi.Passphrase}}" placeholder="Enter passphrase"/>
                         <label for="passphrase_confirm">Confirm passphrase:</label>
-                        <input class="p-form-validation__input" type="password" id="passphrase_confirm" required="required" onblur="validate_password('passphrase', 13)" placeholder="Confirm passphrase"/>
+                        <input class="p-form-validation__input" type="password" id="passphrase_confirm" required="required" onblur="validate_password('passphrase',8,63)" placeholder="Confirm passphrase"/>
                     </div>
                     <div class="p-notification--negative cheshire" id="passphrase_error">
                         <p class="p-notification__response">
@@ -137,8 +136,6 @@
                             <span class="p-notification__status">Error:</span> <text id="portal_pwd_error_msg"></text>
                         </p>
                     </div>
-                    <input type="checkbox" id="show_operational">
-                    <label for="show_operational">Show operational portal</label>
                 </fieldset>
 
                 <br/>
@@ -250,7 +247,7 @@
         })
 	}    
     function saveConfig() {
-        if (!validate_password('passphrase', 13)) {
+        if (!validate_password('passphrase', 8, 63)) {
             return
         }
         if (!validate_password('portal_pwd', 8)) {
@@ -266,8 +263,7 @@
                 CountryCode: $('#country_code').val(),
                 Channel: $('#channel').val(),
                 OperationMode: $('#operation_mode').val(),
-                PortalPassword: $('#portal_pwd').val(),
-                ShowOperational: $('#show_operational').is(":checked")
+                PortalPassword: $('#portal_pwd').val()
             }
         }).done(function (response) {
             $('#grid').css('display', 'none');
@@ -277,16 +273,31 @@
             $('#saveConfig_error').css('display', 'block')
         });
     }
+    function capitalizeFirstLetter(str) {
+        if (len(str) > 0) {
+            return str.charAt(0).toUpperCase() + str.slice(1);
+        }
+        else {
+            return str
+        }
+    }
     // function to confirm password, and confirmation are equals.
     // tag param is the name of primary input field for password.
     // n param is the min length to consider
-    function validate_password(tag, n) {
+    // m param is the max length allowed
+    function validate_password(tag, n, m) {
         var pwd = document.getElementById(tag)
         var pwd_confirm = document.getElementById(tag + '_confirm')
         //validate length
-        if (pwd.value.length < n) {
+        if (n !== undefined && pwd.value.length < n) {
             $('#' + tag + "_form").addClass('is-error')
-            $('#' + tag + '_error_msg').text('Value is too short. Must have ' + n + ' characters at least')
+            $('#' + tag + '_error_msg').text( capitalizeFirstLetter(tag) + ' is too short. Must have ' + n + ' characters at least')
+            $('#' + tag + '_error').css('display', 'block')
+            return false
+        }
+        if (m !== undefined && pwd.value.length > m) {
+            $('#' + tag + "_form").addClass('is-error')
+            $('#' + tag + '_error_msg').text( capitalizeFirstLetter(tag) + ' is too long. Must have ' + m + ' characters at most')
             $('#' + tag + '_error').css('display', 'block')
             return false
         }
