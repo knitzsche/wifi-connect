@@ -85,9 +85,9 @@
                     <input type="text" id="ssid" required="required" value="{{.Config.Wifi.Ssid}}" placeholder="Enter SSID"/>
                     <div class="p-form-validation" id="passphrase_form">
                         <label for="passphrase">Passphrase:</label>
-                        <input class="p-form-validation__input" type="password" id="passphrase" required="required" onblur="validate_password(this.id,8,63)" value="{{.Config.Wifi.Passphrase}}" placeholder="Enter passphrase"/>
+                        <input class="p-form-validation__input" type="password" id="passphrase" required="required" onblur="validate_password(this.id,'Passphrase',8,63)" value="{{.Config.Wifi.Passphrase}}" placeholder="Enter passphrase"/>
                         <label for="passphrase_confirm">Confirm passphrase:</label>
-                        <input class="p-form-validation__input" type="password" id="passphrase_confirm" required="required" onblur="validate_password('passphrase',8,63)" placeholder="Confirm passphrase"/>
+                        <input class="p-form-validation__input" type="password" id="passphrase_confirm" required="required" onblur="validate_password('passphrase','Passphrase',8,63)" placeholder="Confirm passphrase"/>
                     </div>
                     <div class="p-notification--negative cheshire" id="passphrase_error">
                         <p class="p-notification__response">
@@ -132,9 +132,9 @@
                     <h4>Portal</h4>
                     <div class="p-form-validation" id="portal_pwd_form">
                         <label for="portal_pwd">Portal password:</label>
-                        <input class="p-form-validation__input" type="password" id="portal_pwd" required="required" value="{{.Config.Portal.Password}}" onblur="validate_password(this.id,8)"/>
+                        <input class="p-form-validation__input" type="password" id="portal_pwd" required="required" value="{{.Config.Portal.Password}}" onblur="validate_password(this.id,'Portal password',8)"/>
                         <label for="portal_pwd_confirm">Confirm portal password:</label>
-                        <input class="p-form-validation__input" type="password" id="portal_pwd_confirm" required="required" onblur="validate_password('portal_pwd',8)"/>
+                        <input class="p-form-validation__input" type="password" id="portal_pwd_confirm" required="required" onblur="validate_password('portal_pwd','Portal password',8)"/>
                     </div>
                     <div class="p-notification--negative cheshire" id="portal_pwd_error">
                         <p class="p-notification__response">
@@ -208,7 +208,7 @@
             // config specific initial values for combo boxes
             $('#channel').val('{{.Config.Wifi.Channel}}')
             $('#country_code').val('{{.Config.Wifi.CountryCode}}')
-            $('operation_mode').val('{{.Config.Wifi.OperationMode}}')
+            $('#operation_mode').val('{{.Config.Wifi.OperationMode}}')
         {{end}}
 
         // country codes select must be sorted as originally it is, but by value, not by text
@@ -252,10 +252,14 @@
         })
 	}    
     function saveConfig() {
-        if (!validate_password('passphrase', 8, 63)) {
+        if (!validate_password('passphrase', 'Passphrase', 8, 63)) {
+            $('#saveConfig_error').css('display', 'block')
+            $('#saveConfig_error_msg').text('Please, correct Wi-Fi passphrase error before applying configuration')
             return
         }
-        if (!validate_password('portal_pwd', 8)) {
+        if (!validate_password('portal_pwd', 'Portal password', 8)) {
+            $('#saveConfig_error').css('display', 'block')
+            $('#saveConfig_error_msg').text('Please, correct Portal password error before applying configuration')
             return
         }
         $.ajax({
@@ -274,40 +278,29 @@
             $('#grid').css('display', 'none');
             $('#saveConfig_error').css('display', 'none')
             $('#savingConfigAlert').css('display', 'block')
-        }).error(function(xhr, error) {
-            err = JSON.parse(xhr.responseText);
-            //TODO TRACE
-            console.log("ERR:"+ err)
-
-            $('#saveConfig_error').css('display', 'block')
-            $('#saveConfig_error_msg').text('Could not save configuration. Server error: ' + err)
+        }).fail(function(xhr, status, error) {
+             $('#saveConfig_error').css('display', 'block')
+            $('#saveConfig_error_msg').text(xhr.responseText)
         });
-    }
-    function capitalizeFirstLetter(str) {
-        if (len(str) > 0) {
-            return str.charAt(0).toUpperCase() + str.slice(1);
-        }
-        else {
-            return str
-        }
     }
     // function to confirm password, and confirmation are equals.
     // tag param is the name of primary input field for password.
+    // title human readable name of the field validating here
     // n param is the min length to consider
     // m param is the max length allowed
-    function validate_password(tag, n, m) {
+    function validate_password(tag, title, n, m) {
         var pwd = document.getElementById(tag)
         var pwd_confirm = document.getElementById(tag + '_confirm')
         //validate length
         if (n !== undefined && pwd.value.length < n) {
             $('#' + tag + "_form").addClass('is-error')
-            $('#' + tag + '_error_msg').text( capitalizeFirstLetter(tag) + ' is too short. Must have ' + n + ' characters at least')
+            $('#' + tag + '_error_msg').text( title + ' is too short. Must have ' + n + ' characters at least')
             $('#' + tag + '_error').css('display', 'block')
             return false
         }
         if (m !== undefined && pwd.value.length > m) {
             $('#' + tag + "_form").addClass('is-error')
-            $('#' + tag + '_error_msg').text( capitalizeFirstLetter(tag) + ' is too long. Must have ' + m + ' characters at most')
+            $('#' + tag + '_error_msg').text( title + ' is too long. Must have ' + m + ' characters at most')
             $('#' + tag + '_error').css('display', 'block')
             return false
         }
