@@ -44,7 +44,7 @@ snap connect wifi-connect:network-manager network-manager:service
 Note: wifi-ap and network-manager interfaces auto-connect.
 Note: Currently content share interface requires a reboot after connection, as described below.
 
-# Set NetWorkManager to control all networking
+# Set NetworkManager to control all networking
 
 Note: This is a temporary manual step before network-manager snap provides a config option for this.
 

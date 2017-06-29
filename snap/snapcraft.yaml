@@ -1,8 +1,8 @@
 name: wifi-connect 
-version: 0.10-1
+version: 0.10-2-dev
 summary: Connect your device to external wifi over temp wifi AP
 description: |
-  A solution to enable your device to connect to ian external
+  A solution to enable your device to connect to an external
   wifi AP using a temporary wifi AP the device puts up and then
   opening its web portal. Note that wifi-connect daemon assumes
   control of device network management and other management solutions
@@ -21,6 +21,10 @@ apps:
     daemon: simple
     plugs: [network-manager, control, network-bind]
 
+hooks:
+   configure:
+     plugs: [network]
+ 
 plugs:
   control:
     interface: content
@@ -46,10 +50,11 @@ parts:
       export GOPATH=$PWD/../go
       cd $GOPATH/src/launchpad.net/wifi-connect
       ./run-checks all
+      mkdir -p $SNAPCRAFT_PART_INSTALL/snap/hooks
+      mv $SNAPCRAFT_PART_INSTALL/bin/hooks $SNAPCRAFT_PART_INSTALL/snap/hooks/configure
   assets:
     plugin: dump
     source: .
     prepare: ../../../snap/scriptlets/fill_country_codes.sh
     stage:
       - static
-
