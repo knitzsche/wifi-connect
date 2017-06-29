@@ -15,7 +15,6 @@ import (
 
 const testLocalConfig = `
 {
-	"portal.password": "the_password",
 	"portal.no-reset-creds": true,
 	"portal.no-operational": false	
 }
@@ -100,7 +99,7 @@ func (s *S) TestReadLocalConfig(c *check.C) {
 	cfg, err := readLocalConfig()
 	c.Assert(err, check.IsNil)
 
-	verifyLocalConfig(c, cfg, "the_password", true, false)
+	verifyLocalConfig(c, cfg, "", true, false)
 }
 
 func (s *S) TestReadLocalConfigBadEntry(c *check.C) {
@@ -114,7 +113,7 @@ func (s *S) TestReadLocalConfigBadEntry(c *check.C) {
 	cfg, err := readLocalConfig()
 	c.Assert(err, check.IsNil)
 
-	verifyLocalConfig(c, cfg, "the_password", true, false)
+	verifyLocalConfig(c, cfg, "", true, false)
 }
 
 func (s *S) TestReadLocalEmptyConfig(c *check.C) {
@@ -142,35 +141,33 @@ func (s *S) TestReadLocalNotExistingConfig(c *check.C) {
 func (s *S) TestWriteLocalConfigFileDoesNotExists(c *check.C) {
 	mustConfigFlagFile = filepath.Join(os.TempDir(), "config_done"+randomName())
 	defer os.Remove(mustConfigFlagFile)
-	configFile = filepath.Join(os.TempDir(), "config"+randomName())
-	defer os.Remove(configFile)
+	HashFile = filepath.Join(os.TempDir(), "portalpwd"+randomName())
+	defer os.Remove(HashFile)
 
 	err := writeLocalConfig(testPortalConfig)
 	c.Assert(err, check.IsNil)
 
-	cfg, err := readLocalConfig()
+	ok, err := MatchingHash(testPortalConfig.Password)
 	c.Assert(err, check.IsNil)
-
-	c.Assert(*cfg, check.Equals, *testPortalConfig)
+	c.Assert(ok, check.Equals, true)
 }
 
 func (s *S) TestWriteLocalConfigFiletExists(c *check.C) {
 	mustConfigFlagFile = filepath.Join(os.TempDir(), "config_done"+randomName())
 	defer os.Remove(mustConfigFlagFile)
 
-	f, err := createTempFile(testLocalConfigBadEntry)
+	f, err := createTempFile("whateverbadpasswordhash")
 	c.Assert(err, check.IsNil)
 
 	defer os.Remove(f.Name())
-	configFile = f.Name()
+	HashFile = f.Name()
 
 	err = writeLocalConfig(testPortalConfig)
 	c.Assert(err, check.IsNil)
 
-	cfg, err := readLocalConfig()
+	ok, err := MatchingHash(testPortalConfig.Password)
 	c.Assert(err, check.IsNil)
-
-	c.Assert(*cfg, check.Equals, *testPortalConfig)
+	c.Assert(ok, check.Equals, true)
 }
 
 // #####################
@@ -319,8 +316,8 @@ func (s *S) TestWriteRemoteConfig(c *check.C) {
 func (s *S) TestWriteConfig(c *check.C) {
 	wifiapClient = &wifiapClientMock{}
 
-	configFile = filepath.Join(os.TempDir(), "config"+randomName())
-	defer os.Remove(configFile)
+	HashFile = filepath.Join(os.TempDir(), "portalpwd"+randomName())
+	defer os.Remove(HashFile)
 
 	mustConfigFlagFile = filepath.Join(os.TempDir(), "config_done"+randomName())
 	defer os.Remove(mustConfigFlagFile)
@@ -337,13 +334,17 @@ func (s *S) TestWriteConfig(c *check.C) {
 			OperationMode: "g",
 		},
 		Portal: &PortalConfig{
-			Password:           "the_password",
+			Password:           "thepassword",
 			NoResetCredentials: true,
 			NoOperational:      false,
 		},
 	})
 
 	c.Assert(err, check.IsNil)
+
+	ok, err := MatchingHash("thepassword")
+	c.Assert(err, check.IsNil)
+	c.Assert(ok, check.Equals, true)
 
 	c.Assert(MustSetConfig(), check.Equals, false)
 }
@@ -387,7 +388,7 @@ func (s *S) TestReadConfig(c *check.C) {
 	}
 
 	expectedPortalConfig := &PortalConfig{
-		Password:           "the_password",
+		Password:           "",
 		NoResetCredentials: true,
 		NoOperational:      false,
 	}
@@ -401,8 +402,9 @@ func (s *S) TestReadConfig(c *check.C) {
 func (s *S) TestMustSetConfig(c *check.C) {
 	mustConfigFlagFile = filepath.Join(os.TempDir(), "config_done"+randomName())
 	defer os.Remove(mustConfigFlagFile)
-	configFile = filepath.Join(os.TempDir(), "config"+randomName())
-	defer os.Remove(configFile)
+
+	HashFile = filepath.Join(os.TempDir(), "portalpwd"+randomName())
+	defer os.Remove(HashFile)
 
 	wifiapClient = &wifiapClientMock{}
 
@@ -468,40 +470,31 @@ NoOperational: false`
 	c.Assert(cfg.String(), check.Equals, expected)
 }
 
-type wifiapErrorClientMock struct {
-}
-
-func (c *wifiapErrorClientMock) Show() (map[string]interface{}, error) {
-	return nil, fmt.Errorf("Could not show config")
-}
-
-func (c *wifiapErrorClientMock) Enable() error {
-	return fmt.Errorf("Could not get disabled value")
-}
-
-func (c *wifiapErrorClientMock) Disable() error {
-	return fmt.Errorf("Could not get disabled value")
-}
-
-func (c *wifiapErrorClientMock) Enabled() (bool, error) {
-	return false, fmt.Errorf("Could not get disabled value")
-}
-
-func (c *wifiapErrorClientMock) SetSsid(string) error {
-	return fmt.Errorf("Could not set ssid")
-}
-
-func (c *wifiapErrorClientMock) SetPassphrase(string) error {
-	return fmt.Errorf("Could not set passphrase")
-}
-
-func (c *wifiapErrorClientMock) Set(map[string]interface{}) error {
-	return fmt.Errorf("Could not set values")
-}
-
 func (s *S) TestRollbackConfigIfFailsWriting(c *check.C) {
-	configFile = filepath.Join(os.TempDir(), "config"+randomName())
-	defer os.Remove(configFile)
+	wifiapClient = &wifiapClientMock{
+		m: map[string]interface{}{
+			"dhcp.lease-time":          "12h",
+			"dhcp.range-start":         "10.0.60.2",
+			"dhcp.range-stop":          "10.0.60.199",
+			"disabled":                 true,
+			"share.disabled":           false,
+			"share.network-interface":  "wlp2s0",
+			"wifi.address":             "10.0.60.1",
+			"wifi.channel":             "8", // in real environment, channel is returned as string
+			"wifi.hostapd-driver":      "nl80211",
+			"wifi.interface":           "wlp2s0",
+			"wifi.interface-mode":      "direct",
+			"wifi.country-code":        "ES",
+			"wifi.netmask":             "255.255.255.0",
+			"wifi.operation-mode":      "ad",
+			"wifi.security":            "wlan1",
+			"wifi.security-passphrase": "abc17Soj8/Sxh14lcpD",
+			"wifi.ssid":                "mySSID",
+		},
+	}
+
+	HashFile = filepath.Join(os.TempDir(), "portalpwd"+randomName())
+	defer os.Remove(HashFile)
 
 	mustConfigFlagFile = filepath.Join(os.TempDir(), "config_done"+randomName())
 	defer os.Remove(mustConfigFlagFile)
@@ -510,14 +503,8 @@ func (s *S) TestRollbackConfigIfFailsWriting(c *check.C) {
 	c.Assert(err, check.IsNil)
 	c.Assert(MustSetConfig(), check.Equals, false)
 
-	// create a previous local config file
-	localPreviousConfig := &PortalConfig{
-		Password:           "the_previous_password",
-		NoResetCredentials: false,
-		NoOperational:      true,
-	}
-
-	err = writeLocalConfig(localPreviousConfig)
+	// read previous remote config file
+	remotePreviousConfig, err := readRemoteConfig()
 	c.Assert(err, check.IsNil)
 
 	// config to save
@@ -526,7 +513,7 @@ func (s *S) TestRollbackConfigIfFailsWriting(c *check.C) {
 			Ssid:          "Ubuntu",
 			Passphrase:    "17Soj8/Sxh14lcpD",
 			Interface:     "wlp2s0",
-			CountryCode:   "0x31",
+			CountryCode:   "XX",
 			Channel:       6,
 			OperationMode: "g",
 		},
@@ -537,58 +524,20 @@ func (s *S) TestRollbackConfigIfFailsWriting(c *check.C) {
 		},
 	}
 
+	originalHashIt := HashIt
+	HashIt = func(s string) ([]byte, error) { return nil, fmt.Errorf("Error hashing") }
+
 	// assert write fails
-	wifiapClient = &wifiapErrorClientMock{}
 	err = WriteConfig(cfg)
 	c.Assert(err, check.NotNil)
 
-	// read local after write file and verify it's the original one
-	localCfg, err := readLocalConfig()
+	HashIt = originalHashIt
+
+	// read remote config after write file failing and verify it's the original one
+	remoteCfg, err := readRemoteConfig()
 	c.Assert(err, check.IsNil)
-	c.Assert(*localCfg, check.Equals, *localPreviousConfig)
+	c.Assert(*remoteCfg, check.Equals, *remotePreviousConfig)
 
 	// verify must set config flag is not changed in the process
 	c.Assert(MustSetConfig(), check.Equals, false)
-}
-
-func (s *S) TestRollbackConfigIfFailsWriting_NoPreviousConfig(c *check.C) {
-	configFile = filepath.Join(os.TempDir(), "config"+randomName())
-	defer os.Remove(configFile)
-
-	mustConfigFlagFile = filepath.Join(os.TempDir(), "config_done"+randomName())
-	defer os.Remove(mustConfigFlagFile)
-
-	c.Assert(MustSetConfig(), check.Equals, true)
-
-	// config to save
-	cfg := &Config{
-		Wifi: &WifiConfig{
-			Ssid:          "Ubuntu",
-			Passphrase:    "17Soj8/Sxh14lcpD",
-			Interface:     "wlp2s0",
-			CountryCode:   "0x31",
-			Channel:       6,
-			OperationMode: "g",
-		},
-		Portal: &PortalConfig{
-			Password:           "the_password",
-			NoResetCredentials: true,
-			NoOperational:      false,
-		},
-	}
-
-	// assert write fails
-	wifiapClient = &wifiapErrorClientMock{}
-	err := WriteConfig(cfg)
-	c.Assert(err, check.NotNil)
-
-	// verify no local config file remains after the error
-	_, err = os.Stat(configFile)
-	c.Assert(os.IsNotExist(err), check.Equals, true)
-
-	// verify reading local config returns nil
-	localCfg, err := readLocalConfig()
-	c.Assert(localCfg, check.IsNil)
-	c.Assert(err, check.IsNil)
-	c.Assert(MustSetConfig(), check.Equals, true)
 }

@@ -13,7 +13,7 @@ import (
 	"launchpad.net/wifi-connect/wifiap"
 )
 
-var configFile = filepath.Join(os.Getenv("SNAP_COMMON"), "config.json")
+var configFile = filepath.Join(os.Getenv("SNAP_COMMON"), "pre-config.json")
 var mustConfigFlagFile = filepath.Join(os.Getenv("SNAP_COMMON"), ".config_done.flag")
 
 var wifiapClient wifiap.Operations = wifiap.DefaultClient()
@@ -36,7 +36,7 @@ type WifiConfig struct {
 
 // PortalConfig config specific parameters for portals configuration
 type PortalConfig struct {
-	Password           string `json:"portal.password"`
+	Password           string //`json:"portal.password"`
 	NoResetCredentials bool   `json:"portal.no-reset-creds"`
 	NoOperational      bool   `json:"portal.no-operational"`
 }
@@ -103,14 +103,10 @@ func readLocalConfig() (*PortalConfig, error) {
 }
 
 func writeLocalConfig(p *PortalConfig) error {
-	bytes, err := json.Marshal(p)
+	// the only writable local config param is the password, stored as a hash
+	_, err := HashIt(p.Password)
 	if err != nil {
-		return fmt.Errorf("Could not marshal local config to raw data: %v", err)
-	}
-
-	err = ioutil.WriteFile(configFile, bytes, 0644)
-	if err != nil {
-		return fmt.Errorf("Could not write local config to file: %v", err)
+		return fmt.Errorf("Could not hash portal password to file: %v", err)
 	}
 
 	return nil
@@ -192,36 +188,27 @@ var ReadConfig = func() (*Config, error) {
 
 // WriteConfig writes all remote and local config at the same time
 var WriteConfig = func(c *Config) error {
-	// read local config and save it as backup. This will be written back
-	// in case saving remote config fails
-	localConfigBackup, err := readLocalConfig()
+	remoteConfigBackup, err := readRemoteConfig()
 	if err != nil {
 		return fmt.Errorf("Error reading current config before applying new one: %v", err)
 	}
 
-	err = writeLocalConfig(c.Portal)
+	err = writeRemoteConfig(c.Wifi)
 	if err != nil {
-		// if an error happens writing local config there is no need to restore
-		// backup, as nothing has been written
+		// if an error happens writing remote config there is no need to restore
+		// backup, as nothing shouldn't have been written
 		return err
 	}
 
-	err = writeRemoteConfig(c.Wifi)
+	err = writeLocalConfig(c.Portal)
 	if err != nil {
-		// restore backup if not nil. If backup is nil it means there is no previous stored local config
-		if localConfigBackup != nil {
-			backupErr := writeLocalConfig(localConfigBackup)
+		// rollback
+		if remoteConfigBackup != nil {
+			backupErr := writeRemoteConfig(remoteConfigBackup)
 			if backupErr != nil {
-				return fmt.Errorf("Could not restore previous local configuration: %v", backupErr)
-			}
-		} else {
-			// if there is not exists any previous config, let's remove just written local config file
-			backupErr := os.Remove(configFile)
-			if backupErr != nil {
-				return fmt.Errorf("Could not remove temporary local config file: %v", backupErr)
+				return fmt.Errorf("Could not restore previous remote configuration: %v\n after error: %v", backupErr, err)
 			}
 		}
-		// return error after completing backup
 		return err
 	}
 
