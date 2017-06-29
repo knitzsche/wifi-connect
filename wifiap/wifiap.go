@@ -25,6 +25,11 @@ import (
 	"time"
 )
 
+const (
+	minPassphraseLen int = 8
+	maxPassphraseLen int = 63
+)
+
 // Client struct exposing wifi-ap operations
 type Client struct {
 	restClient *RestClient
@@ -38,6 +43,16 @@ func NewClient(tc TransportClient) *Client {
 // DefaultClient returns pointer to a new wifi-ap client using default transport
 func DefaultClient() *Client {
 	return &Client{restClient: defaultRestClient()}
+}
+
+// Operations interface enables mock testing
+type Operations interface {
+	Show() (map[string]interface{}, error)
+	Enabled() (bool, error)
+	Enable() error
+	Disable() error
+	SetSsid(string) error
+	SetPassphrase(string) error
 }
 
 func defaultServiceURI() string {
@@ -163,8 +178,11 @@ func (client *Client) SetSsid(ssid string) error {
 
 // SetPassphrase sets the credential to access the wifi ap
 func (client *Client) SetPassphrase(passphrase string) error {
-	if len(passphrase) < 13 {
-		return fmt.Errorf("Passphrase must be at least 13 chars in length. Please try again")
+	if len(passphrase) < minPassphraseLen {
+		return fmt.Errorf("Passphrase must be at least 8 chars in length. Please try again")
+	}
+	if len(passphrase) > maxPassphraseLen {
+		return fmt.Errorf("Passphrase must be less than 64 long. Please try again")
 	}
 
 	params := map[string]string{
