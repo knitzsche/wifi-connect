@@ -31,7 +31,7 @@ import (
 
 func main() {
 
-	log.SetFlags(log.Lsongfile)
+	log.SetFlags(log.Lshortfile)
 	log.SetPrefix("== wifi-connect: ")
 
 	c := netman.DefaultClient()
