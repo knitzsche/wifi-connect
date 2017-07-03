@@ -18,8 +18,12 @@
 package daemon
 
 import (
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
+	"path/filepath"
 
 	"launchpad.net/wifi-connect/avahi"
 	"launchpad.net/wifi-connect/server"
@@ -39,6 +43,19 @@ var manualFlagPath string
 var waitFlagPath string
 var previousState = STARTING
 var state = STARTING
+
+// PreConfigFile is the path to the file that stores the hash of the portals password
+var PreConfigFile = filepath.Join(os.Getenv("SNAP_COMMON"), "pre-config.json")
+
+// PreConfig is the struct representing a configuration
+type PreConfig struct {
+	Passphrase    string `json:"wifi.security-passphrase,omitempty"`
+	Ssid          string `json:"wifi.ssid,omitempty"`
+	Interface     string `json:"wifi.interface,omitempty"`
+	Password      string `json:"portal.password,omitempty"`
+	NoOperational bool   `json:"portal.no-operational,omitempty"` //whether to show the operational portal
+	NoResetCreds  bool   `json:"portal.no-reset-creds,omitempty"` //whether user must reset passphrase and password on first use of mgmt portal
+}
 
 // Client is the base type for both testing and runtime
 type Client struct {
@@ -189,11 +206,55 @@ func (c *Client) OperationalServerDown() {
 	}
 }
 
-// SetDefaults sets defaults if not yet set. Currently the hash
-// for the portals password is set.
-// TODO: set default password based on MAC addr or Serial number
-func (c *Client) SetDefaults() {
-	if _, err := os.Stat(utils.HashFile); os.IsNotExist(err) {
-		utils.HashIt("wifi-connect")
+// LoadPreConfig returns a PreConfig based on the pre-config.json, if present, and an error to indicate
+// possible json unmarshal failure
+func LoadPreConfig() (*PreConfig, error) {
+	config := &PreConfig{}
+	content, err := ioutil.ReadFile(PreConfigFile)
+	if err == nil {
+		log.Print("preconfiguration file found")
 	}
+	err = json.Unmarshal(content, config)
+	if err != nil {
+		return config, err
+	}
+	return config, nil
+}
+
+// SetDefaults creates the run time configuration based on wifi-ap and the pre-config.json
+// configuration file, if any. The configuration is returned with an error. PreConfig.PreConfigfile
+// indicates whether a pre-config file exists.
+func (c *Client) SetDefaults(cw wifiap.Operations, config *PreConfig) error {
+	if err != nil {
+		log.Printf("SetDefaults: preconfig unmarshall errorr: %v", err)
+	}
+	ap, errShow := cw.Show()
+	if errShow != nil {
+		log.Printf("SetDefaults: wifi-ap.Show err: %v", errShow)
+	}
+	if ap["wifi.security-passphrase"] != config.Passphrase {
+		if len(config.Passphrase) > 0 {
+			err = cw.SetPassphrase(config.Passphrase)
+			log.Print("SetDefaults wifi-ap passphrase being set")
+			if err != nil {
+				log.Printf("SetDefaults: passphrase err: %v", err)
+				return err
+			}
+		}
+	}
+	if len(config.Password) > 0 {
+		fmt.Println("== wifi-connect/SetDefaults portal password being set")
+		_, err = utils.HashIt(config.Password)
+		if err != nil {
+			log.Printf("SetDefaults: password err: %v", err)
+			return err
+		}
+	}
+	if config.NoOperational {
+		log.Print("SetDefaults: operational portal is now disabled")
+	}
+	if config.NoResetCreds {
+		log.Print("SetDefaults: reset creds requirement is now disabled")
+	}
+	return nil
 }

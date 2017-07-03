@@ -73,7 +73,7 @@ func waitForCtrlC() {
 
 func main() {
 
-	log.SetFlags(log.Llongfile)
+	log.SetFlags(log.Lshortfile)
 	log.SetPrefix("== wifi-connect: ")
 
 	if len(os.Args) < 2 {

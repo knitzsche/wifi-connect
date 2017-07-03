@@ -2,7 +2,7 @@ summary: Test default service is running at beginning, correct configuration at 
     put wifi-connect in manual mode and see wlan1 can connect to it
 
 environment:
-    MAX_ITERATIONS: 20
+    MAX_ITERATIONS: 5
 
 prepare: |
     # We need some tools for scanning etc.
@@ -44,7 +44,7 @@ execute: |
     # This is a known issue, see comments here https://github.com/CanonicalLtd/UCWifiConnect/issues/38
     sleep 40
     wifi-connect stop
-    until journalctl | grep '== wifi-connect: entering MANUAL mode' ; do
+    until journalctl | grep 'entering MANUAL mode' ; do
         sleep 5
         wifi-connect stop
     done

@@ -31,17 +31,24 @@ import (
 
 func main() {
 
-	log.SetFlags(log.Llongfile)
+	log.SetFlags(log.Lsongfile)
 	log.SetPrefix("== wifi-connect: ")
-
-	client := daemon.GetClient()
-	client.SetDefaults()
-	first := true
-	client.SetWaitFlagPath(os.Getenv("SNAP_COMMON") + "/startingApConnect")
-	client.SetManualFlagPath(os.Getenv("SNAP_COMMON") + "/manualMode")
 
 	c := netman.DefaultClient()
 	cw := wifiap.DefaultClient()
+	client := daemon.GetClient()
+
+	config, err := daemon.LoadPreConfig()
+	if err != nil {
+		log.Printf("daemon: preconfiguration error: %v", err)
+	}
+	err = client.SetDefaults(cw, config)
+	if err != nil {
+		log.Printf("daemon: SetDetaults error: %v", err)
+	}
+	first := true
+	client.SetWaitFlagPath(os.Getenv("SNAP_COMMON") + "/startingApConnect")
+	client.SetManualFlagPath(os.Getenv("SNAP_COMMON") + "/manualMode")
 
 	client.ManagementServerDown()
 	client.OperationalServerDown()
@@ -99,7 +106,9 @@ func main() {
 			if client.GetPreviousState() == daemon.MANAGING {
 				client.ManagementServerDown()
 			}
-			client.OperationalServerUp()
+			if !config.NoOperational {
+				client.OperationalServerUp()
+			}
 			continue
 		}
 
@@ -111,7 +120,7 @@ func main() {
 		// if wlan0 managed, set Unmanaged so that we can bring up wifi-ap
 		// properly
 		if err := c.Unmanage(); err != nil {
-			fmt.Println(err)
+			log.Print(err)
 			continue
 		}
 
@@ -135,7 +144,7 @@ func main() {
 			}
 			log.Printf("starting wifi-ap")
 			if err := cw.Enable(); err != nil {
-				fmt.Println(err)
+				log.Print(err)
 				continue
 			}
 			if client.GetPreviousState() == daemon.OPERATING {

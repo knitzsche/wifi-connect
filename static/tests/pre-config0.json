@@ -1,0 +1,7 @@
+{
+    "wifi.security-passphrase": "abcdefghijklmnop",
+    "portal.password": "qwerzxcv",
+    "portal.no-operational": true,
+    "portal.no-reset-creds": true
+}
+
