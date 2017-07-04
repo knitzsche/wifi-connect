@@ -69,7 +69,7 @@ func (c *Client) snapGetStr(key string, target *string) {
 		return
 	}
 	if len(val) == 0 {
-		log.Printf("== wifi-connect/configure error: key %s exists but has zero length", key)
+		log.Printf("configure error: key %s exists but has zero length", key)
 		return
 	}
 	*target = val
@@ -82,7 +82,7 @@ func (c *Client) snapGetBool(key string, target *bool) {
 		return
 	}
 	if len(val) == 0 {
-		log.Printf("== wifi-connect/configure error: key %s exists but has zero length", key)
+		log.Printf("configure error: key %s exists but has zero length", key)
 		return
 	}
 
@@ -94,6 +94,8 @@ func (c *Client) snapGetBool(key string, target *bool) {
 }
 
 func main() {
+	log.SetFlags(log.Llongfile)
+	log.SetPrefix("== wifi-connect: ")
 	client := GetClient()
 	preConfig := &daemon.PreConfig{}
 	client.snapGetStr("wifi.security-passphrase", &preConfig.Passphrase)
@@ -105,7 +107,7 @@ func main() {
 	if errJM == nil {
 		errWJ := ioutil.WriteFile(daemon.PreConfigFile, b, 0644)
 		if errWJ != nil {
-			log.Print("== wifi-connect/configure error:", errWJ)
+			log.Print("configure error:", errWJ)
 		}
 	}
 }

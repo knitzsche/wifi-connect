@@ -20,6 +20,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"log"
 	"os"
 	"os/signal"
 	"strings"
@@ -72,8 +73,11 @@ func waitForCtrlC() {
 
 func main() {
 
+	log.SetFlags(log.Lshortfile)
+	log.SetPrefix("== wifi-connect: ")
+
 	if len(os.Args) < 2 {
-		fmt.Println("== wifi-connect/cmd Error: no command arguments provided")
+		fmt.Println("Error: no command arguments provided")
 		return
 	}
 	args := os.Args[1:]
@@ -96,7 +100,7 @@ func main() {
 			fmt.Println(err)
 			return
 		}
-		fmt.Println("Entering MANUAL Mode. Wifi-connect has stopped managing state. Use 'start' to restore normal operations")
+		fmt.Println("entering MANUAL Mode. Wifi-connect has stopped managing state. Use 'start' to restore normal operations")
 	case "start":
 		if !checkSudo() {
 			return

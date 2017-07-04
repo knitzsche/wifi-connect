@@ -19,6 +19,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"time"
 
@@ -29,17 +30,21 @@ import (
 )
 
 func main() {
+
+	log.SetFlags(log.Lshortfile)
+	log.SetPrefix("== wifi-connect: ")
+
 	c := netman.DefaultClient()
 	cw := wifiap.DefaultClient()
 	client := daemon.GetClient()
 
 	config, err := daemon.LoadPreConfig()
 	if err != nil {
-		fmt.Println("== wifi-connect/daemon: preconfiguration error:", err)
+		log.Printf("daemon: preconfiguration error: %v", err)
 	}
 	err = client.SetDefaults(cw, config)
 	if err != nil {
-		fmt.Println("== wifi-connect/daemon: SetDetaults error:", err)
+		log.Printf("daemon: SetDetaults error: %v", err)
 	}
 	first := true
 	client.SetWaitFlagPath(os.Getenv("SNAP_COMMON") + "/startingApConnect")
@@ -50,7 +55,7 @@ func main() {
 
 	for {
 		if first {
-			fmt.Println("== wifi-connect: daemon STARTING")
+			log.Print("daemon STARTING")
 			client.SetPreviousState(daemon.STARTING)
 			client.SetState(daemon.STARTING)
 			first = false
@@ -96,7 +101,7 @@ func main() {
 		if c.ConnectedWifi(c.GetWifiDevices(c.GetDevices())) {
 			client.SetState(daemon.OPERATING)
 			if client.GetPreviousState() != daemon.OPERATING {
-				fmt.Println("== wifi-connect: entering OPERATIONAL mode")
+				log.Print("entering OPERATIONAL mode")
 			}
 			if client.GetPreviousState() == daemon.MANAGING {
 				client.ManagementServerDown()
@@ -109,20 +114,20 @@ func main() {
 
 		client.SetState(daemon.MANAGING)
 		if client.GetPreviousState() != daemon.MANAGING {
-			fmt.Println("== wifi-connect: entering MANAGEMENT mode")
+			log.Print("entering MANAGEMENT mode")
 		}
 
 		// if wlan0 managed, set Unmanaged so that we can bring up wifi-ap
 		// properly
 		if err := c.Unmanage(); err != nil {
-			fmt.Println(err)
+			log.Print(err)
 			continue
 		}
 
 		//wifi-ap UP?
 		wifiUp, err := cw.Enabled()
 		if err != nil {
-			fmt.Println("== wifi-connect: Error checking wifi-ap.Enabled():", err)
+			log.Printf("Error checking wifi-ap.Enabled(): %v", err)
 			continue // try again since no better course of action
 		}
 
@@ -134,12 +139,12 @@ func main() {
 				continue
 			}
 			if !found {
-				fmt.Println("== wifi-connect: Looping.")
+				log.Print("No SSIDs found. Continuing to scan for SSIDS...")
 				continue
 			}
-			fmt.Println("== wifi-connect: starting wifi-ap")
+			log.Printf("starting wifi-ap")
 			if err := cw.Enable(); err != nil {
-				fmt.Println(err)
+				log.Print(err)
 				continue
 			}
 			if client.GetPreviousState() == daemon.OPERATING {

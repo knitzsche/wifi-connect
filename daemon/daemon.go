@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
 
@@ -128,13 +129,13 @@ func (c *Client) ManualMode() bool {
 	if _, err := os.Stat(manualFlagPath); os.IsNotExist(err) {
 		if state == MANUAL {
 			c.SetState(STARTING)
-			fmt.Println("== wifi-connect: entering STARTING mode")
+			log.Print("entering STARTING mode")
 		}
 		return false
 	}
 	if state != MANUAL {
 		c.SetState(MANUAL)
-		fmt.Println("== wifi-connect: entering MANUAL mode")
+		log.Print("entering MANUAL mode")
 	}
 	return true
 }
@@ -150,7 +151,7 @@ func (c *Client) IsApUpWithoutSSIDs(cw *wifiap.Client) bool {
 	}
 	ssids, _ := utils.ReadSsidsFile()
 	if len(ssids) < 1 {
-		fmt.Println("== wifi-connect: wifi-ap is UP but has no SSIDS")
+		log.Print("wifi-ap is UP but has no SSIDS")
 		return true // ap is up with no ssids
 	}
 	return false
@@ -162,7 +163,7 @@ func (c *Client) ManagementServerUp() {
 	if server.Current != server.Management && server.State == server.Stopped {
 		err = server.StartManagementServer()
 		if err != nil {
-			fmt.Println("== wifi-connect: Error start Mamagement portal:", err)
+			log.Printf("Error start Mamagement portal: %v", err)
 		}
 		// init mDNS
 		avahi.InitMDNS()
@@ -175,7 +176,7 @@ func (c *Client) ManagementServerDown() {
 	if server.Current == server.Management && (server.State == server.Running || server.State == server.Starting) {
 		err = server.ShutdownManagementServer()
 		if err != nil {
-			fmt.Println("== wifi-connect: Error stopping the Management portal:", err)
+			log.Printf("Error stopping the Management portal: %v", err)
 		}
 		//remove flag fie so daemon resumes normal control
 		utils.RemoveFlagFile(os.Getenv("SNAP_COMMON") + "/startingApConnect")
@@ -188,7 +189,7 @@ func (c *Client) OperationalServerUp() {
 	if server.Current != server.Operational && server.State == server.Stopped {
 		err = server.StartOperationalServer()
 		if err != nil {
-			fmt.Println("== wifi-connect: Error starting the Operational portal:", err)
+			log.Printf("Error starting the Operational portal: %v", err)
 		}
 		// init mDNS
 		avahi.InitMDNS()
@@ -200,7 +201,7 @@ func (c *Client) OperationalServerDown() {
 	if server.Current == server.Operational && (server.State == server.Running || server.State == server.Starting) {
 		err = server.ShutdownOperationalServer()
 		if err != nil {
-			fmt.Println("== wifi-connect: Error stopping Operational portal:", err)
+			log.Printf("Error stopping Operational portal: %v", err)
 		}
 	}
 }
@@ -211,7 +212,7 @@ func LoadPreConfig() (*PreConfig, error) {
 	config := &PreConfig{}
 	content, err := ioutil.ReadFile(PreConfigFile)
 	if err == nil {
-		fmt.Println("== wifi-connect/daemon: preconfiguration file found")
+		log.Print("preconfiguration file found")
 	}
 	err = json.Unmarshal(content, config)
 	if err != nil {
@@ -225,18 +226,18 @@ func LoadPreConfig() (*PreConfig, error) {
 // indicates whether a pre-config file exists.
 func (c *Client) SetDefaults(cw wifiap.Operations, config *PreConfig) error {
 	if err != nil {
-		fmt.Println("== wifi-connect/daemon/SetDefaults: preconfig unmarshall errorr:", err)
+		log.Printf("SetDefaults: preconfig unmarshall errorr: %v", err)
 	}
 	ap, errShow := cw.Show()
 	if errShow != nil {
-		fmt.Println("== wifi-connect/daemon/SetDefaults: wifi-ap.Show err:", errShow)
+		log.Printf("SetDefaults: wifi-ap.Show err: %v", errShow)
 	}
 	if ap["wifi.security-passphrase"] != config.Passphrase {
 		if len(config.Passphrase) > 0 {
 			err = cw.SetPassphrase(config.Passphrase)
-			fmt.Println("== wifi-connect/SetDefaults wifi-ap passphrase being set")
+			log.Print("SetDefaults wifi-ap passphrase being set")
 			if err != nil {
-				fmt.Println("== wifi-connect/daemon/SetDefaults: passphrase err:", err)
+				log.Printf("SetDefaults: passphrase err: %v", err)
 				return err
 			}
 		}
@@ -245,15 +246,15 @@ func (c *Client) SetDefaults(cw wifiap.Operations, config *PreConfig) error {
 		fmt.Println("== wifi-connect/SetDefaults portal password being set")
 		_, err = utils.HashIt(config.Password)
 		if err != nil {
-			fmt.Println("== wifi-connect/daemon/SetDefaults: password err:", err)
+			log.Printf("SetDefaults: password err: %v", err)
 			return err
 		}
 	}
 	if config.NoOperational {
-		fmt.Println("== wifi-connect/SetDefaults: operational portal is now disabled")
+		log.Print("SetDefaults: operational portal is now disabled")
 	}
 	if config.NoResetCreds {
-		fmt.Println("== wifi-connect/SetDefaults: reset creds requirement is now disabled")
+		log.Print("SetDefaults: reset creds requirement is now disabled")
 	}
 	return nil
 }
