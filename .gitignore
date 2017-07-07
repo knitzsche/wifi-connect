@@ -1,4 +1,14 @@
+# testing files
 .coverage
 .tests-extras
-netman/.dbus.go.swp
-cmds/netman/.cmd_netman.go.swp
+
+# editor files
+*.swp
+*~
+
+# snapcraft files
+parts/
+prime/
+snap/.snapcraft/
+stage/
+*.snap
