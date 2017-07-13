@@ -45,7 +45,7 @@ func DefaultClient() *Client {
 	return &Client{restClient: defaultRestClient()}
 }
 
-// Operations interface enables mock testing
+// Operations interface defining operations implemented by wifiap client
 type Operations interface {
 	Show() (map[string]interface{}, error)
 	Enabled() (bool, error)
@@ -53,6 +53,7 @@ type Operations interface {
 	Disable() error
 	SetSsid(string) error
 	SetPassphrase(string) error
+	Set(map[string]interface{}) error
 }
 
 func defaultServiceURI() string {
@@ -197,6 +198,25 @@ func (client *Client) SetPassphrase(passphrase string) error {
 	response, err := client.restClient.sendHTTPRequest(defaultServiceURI(), "POST", bytes.NewReader(b))
 	if err != nil {
 		return fmt.Errorf("wifi-ap set passphrase operation failed: %q", err)
+	}
+
+	if response.StatusCode != http.StatusOK || response.Status != http.StatusText(http.StatusOK) {
+		return fmt.Errorf("Failed to set configuration, service returned: %d (%s)", response.StatusCode, response.Status)
+	}
+
+	return nil
+}
+
+// Set sets a group of parameters in wifi-ap
+func (client *Client) Set(params map[string]interface{}) error {
+	b, err := json.Marshal(params)
+	if err != nil {
+		return fmt.Errorf("Error when marshalling input parameters: %q", err)
+	}
+
+	response, err := client.restClient.sendHTTPRequest(defaultServiceURI(), "POST", bytes.NewReader(b))
+	if err != nil {
+		return fmt.Errorf("wifi-ap set operation failed: %q", err)
 	}
 
 	if response.StatusCode != http.StatusOK || response.Status != http.StatusText(http.StatusOK) {

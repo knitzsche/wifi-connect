@@ -12,11 +12,14 @@
 <body>
     <div class="wrapper">
         <div id="main-content" class="inner-wrapper">
+            <br/>
             <div class="row no-border" id="grid">
-            <h3>Connecting...</h3>
-                 <div class="twelve-col box" style="background-color: #eee">
-                    <p>Device is now attempting to connect to <b>{{.Ssid}}</b>. <br/>
+                <div class="p-notification" id="grid">
+                    <p class="p-notification__response">
+                        <span class="p-notification__status">Connecting...</span>
+                        Device is now attempting to connect to <b>{{.Ssid}}</b>. <br/>
                         You may try to connect to the device through the new connection.</p>
+                    </p>
                 </div>
             </div>
         </div>

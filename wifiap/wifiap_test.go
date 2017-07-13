@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"reflect"
 	"strings"
 	"testing"
 )
@@ -148,7 +149,7 @@ func TestShow(t *testing.T) {
 }
 
 // Testing Enable()
-func validateHeaders(m map[string]string, req *http.Request) error {
+func validateHeaders(m map[string]interface{}, req *http.Request) error {
 	buf, _ := ioutil.ReadAll(req.Body)
 	var headers map[string]interface{}
 	if err := json.Unmarshal(buf, &headers); err != nil {
@@ -160,9 +161,20 @@ func validateHeaders(m map[string]string, req *http.Request) error {
 		return fmt.Errorf("Expected %v headers", n)
 	}
 
-	for key, value := range m {
-		if headers[key] != value {
-			return fmt.Errorf("Header '%v' has not valid value", key)
+	for key, mValue := range m {
+		hValue := headers[key]
+		if hValue != mValue {
+			// evaluate the special case of hValue unmarshalled as float64
+			if reflect.TypeOf(hValue) != reflect.TypeOf(mValue) {
+				switch hValue := hValue.(type) {
+				case float64:
+					if int(hValue) != mValue.(int) {
+						return fmt.Errorf("Header '%v' has not valid value. Expected %v but has %v", key, mValue, hValue)
+					}
+				}
+			} else {
+				return fmt.Errorf("Header '%v' has not valid value. Expected %v but has %v", key, mValue, hValue)
+			}
 		}
 	}
 
@@ -181,7 +193,7 @@ func (mock *mockTransportEnable) Do(req *http.Request) (*http.Response, error) {
 			return nil, fmt.Errorf("Method is not valid. Expected POST, got %v", req.Method)
 		}
 
-		err := validateHeaders(map[string]string{"disabled": "false"}, req)
+		err := validateHeaders(map[string]interface{}{"disabled": "false"}, req)
 		if err != nil {
 			return nil, err
 		}
@@ -238,7 +250,7 @@ func (mock *mockTransportDisable) Do(req *http.Request) (*http.Response, error) 
 			return nil, fmt.Errorf("Method is not valid. Expected POST, got %v", req.Method)
 		}
 
-		err := validateHeaders(map[string]string{"disabled": "true"}, req)
+		err := validateHeaders(map[string]interface{}{"disabled": "true"}, req)
 		if err != nil {
 			return nil, err
 		}
@@ -363,7 +375,7 @@ func (mock *mockTransportSetSsid) Do(req *http.Request) (*http.Response, error) 
 		return nil, fmt.Errorf("Method is not valid. Expected POST, got %v", req.Method)
 	}
 
-	err := validateHeaders(map[string]string{"wifi.ssid": "MySsid"}, req)
+	err := validateHeaders(map[string]interface{}{"wifi.ssid": "MySsid"}, req)
 	if err != nil {
 		return nil, err
 	}
@@ -401,7 +413,7 @@ func (mock *mockTransportSetPassphrase) Do(req *http.Request) (*http.Response, e
 		return nil, fmt.Errorf("Method is not valid. Expected POST, got %v", req.Method)
 	}
 
-	err := validateHeaders(map[string]string{"wifi.security": "wpa2", "wifi.security-passphrase": "passphrase123"}, req)
+	err := validateHeaders(map[string]interface{}{"wifi.security": "wpa2", "wifi.security-passphrase": "passphrase123"}, req)
 	if err != nil {
 		return nil, err
 	}
@@ -422,5 +434,81 @@ func TestSetPassphrase(t *testing.T) {
 	err := client.SetPassphrase("passphrase123")
 	if err != nil {
 		t.Errorf("Failed to set passphrase: %v\n", err)
+	}
+}
+
+type mockTransportSet struct{}
+
+func (mock *mockTransportSet) Do(req *http.Request) (*http.Response, error) {
+
+	url := req.URL.String()
+	if url != "http://unix/v1/configuration" {
+		return nil, fmt.Errorf("Not valid request URL: %v", url)
+	}
+
+	if req.Method != "POST" {
+		return nil, fmt.Errorf("Method is not valid. Expected POST, got %v", req.Method)
+	}
+
+	err := validateHeaders(map[string]interface{}{
+		"dhcp.lease-time":          "12h",
+		"dhcp.range-start":         "10.0.60.2",
+		"dhcp.range-stop":          "10.0.60.199",
+		"disabled":                 true,
+		"share.disabled":           false,
+		"share.network-interface":  "wlp2s0",
+		"wifi.address":             "10.0.60.1",
+		"wifi.channel":             6,
+		"wifi.hostapd-driver":      "nl80211",
+		"wifi.interface":           "wlp2s0",
+		"wifi.interface-mode":      "direct",
+		"wifi.country-code":        "0x31",
+		"wifi.netmask":             "255.255.255.0",
+		"wifi.operation-mode":      "g",
+		"wifi.security":            "wpa2",
+		"wifi.security-passphrase": "17Soj8/Sxh14lcpD",
+		"wifi.ssid":                "Ubuntu",
+	}, req)
+	if err != nil {
+		return nil, err
+	}
+
+	rawBody := `{"result":{},"status":"OK","status-code":200,"type":"sync"}`
+
+	response := http.Response{
+		StatusCode: 200,
+		Status:     "200 OK",
+		Body:       ioutil.NopCloser(strings.NewReader(rawBody)),
+	}
+
+	return &response, nil
+}
+
+func TestSet(t *testing.T) {
+
+	params := map[string]interface{}{
+		"dhcp.lease-time":          "12h",
+		"dhcp.range-start":         "10.0.60.2",
+		"dhcp.range-stop":          "10.0.60.199",
+		"disabled":                 true,
+		"share.disabled":           false,
+		"share.network-interface":  "wlp2s0",
+		"wifi.address":             "10.0.60.1",
+		"wifi.channel":             6,
+		"wifi.hostapd-driver":      "nl80211",
+		"wifi.interface":           "wlp2s0",
+		"wifi.interface-mode":      "direct",
+		"wifi.country-code":        "0x31",
+		"wifi.netmask":             "255.255.255.0",
+		"wifi.operation-mode":      "g",
+		"wifi.security":            "wpa2",
+		"wifi.security-passphrase": "17Soj8/Sxh14lcpD",
+		"wifi.ssid":                "Ubuntu",
+	}
+
+	client := NewClient(&mockTransportSet{})
+	err := client.Set(params)
+	if err != nil {
+		t.Errorf("Failed to set params: %v\n", err)
 	}
 }

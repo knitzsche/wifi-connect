@@ -163,6 +163,10 @@ func (mock *mockWifiap) SetPassphrase(p string) error {
 	return nil
 }
 
+func (mock *mockWifiap) Set(map[string]interface{}) error {
+	return nil
+}
+
 func TestLoadPreConfig(t *testing.T) {
 	PreConfigFile = "../static/tests/pre-config0.json"
 	config, err := LoadPreConfig()

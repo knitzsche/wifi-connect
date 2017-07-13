@@ -27,6 +27,8 @@ import (
 	"text/template"
 	"time"
 
+	"strconv"
+
 	"launchpad.net/wifi-connect/utils"
 )
 
@@ -34,19 +36,29 @@ const (
 	managementTemplatePath  = "/templates/management.html"
 	connectingTemplatePath  = "/templates/connecting.html"
 	operationalTemplatePath = "/templates/operational.html"
+	firstConfigTemplatePath = "/templates/config.html"
 )
 
 // ResourcesPath absolute path to web static resources
 var ResourcesPath = filepath.Join(os.Getenv("SNAP"), "static")
+
+// first time management portal is accessed this file is created.
+var firstConfigFlagFile = filepath.Join(os.Getenv("SNAP_COMMON"), ".first_config")
 
 var cw interface{}
 
 // Data interface representing any data included in a template
 type Data interface{}
 
-// SsidsData dynamic data to fulfill the SSIDs page template
-type SsidsData struct {
-	Ssids []string
+// ManagementData dynamic data to fulfill the management page.
+// It can contain SSIDs list or snap configuration
+// NOTE: page is a workaround to render proper grid depending on its value (ssids or config).
+// In case authentication mechanism is modified for not to be so intrusive, we could have
+// different pages for this
+type ManagementData struct {
+	Ssids  []string
+	Config *utils.Config
+	Page   string
 }
 
 // ConnectingData dynamic data to fulfill the connect result page template
@@ -61,22 +73,41 @@ func execTemplate(w http.ResponseWriter, templatePath string, data Data) {
 	templateAbsPath := filepath.Join(ResourcesPath, templatePath)
 	t, err := template.ParseFiles(templateAbsPath)
 	if err != nil {
-		log.Printf("Error loading the template at %v: %v", templatePath, err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		msg := fmt.Sprintf("Error loading the template at %v: %v", templatePath, err)
+		log.Println(msg)
+		http.Error(w, msg, http.StatusInternalServerError)
 		return
 	}
 
 	err = t.Execute(w, data)
 	if err != nil {
-		log.Printf("Error executing the template at %v: %v", templatePath, err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		msg := fmt.Sprintf("Error executing the template at %v : %v", templatePath, err)
+		log.Print(msg)
+		http.Error(w, msg, http.StatusInternalServerError)
 		return
 	}
 }
 
-// ManagementHandler lists the current available SSIDs
+// ManagementHandler handles management portal
 func ManagementHandler(w http.ResponseWriter, r *http.Request) {
-	// daemon stores current available ssids in a file
+
+	if utils.MustSetConfig() {
+
+		config, err := utils.ReadConfig()
+		if err != nil {
+			msg := fmt.Sprintf("Error reading configuration: %v", err)
+			log.Println(msg)
+			http.Error(w, msg, http.StatusInternalServerError)
+			return
+		}
+
+		if !config.Portal.NoResetCredentials {
+			execTemplate(w, managementTemplatePath, ManagementData{Config: config, Page: "config"})
+			return
+		}
+
+	}
+
 	ssids, err := utils.ReadSsidsFile()
 	if err != nil {
 		log.Printf("Error reading SSIDs file: %v", err)
@@ -84,15 +115,58 @@ func ManagementHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data := SsidsData{Ssids: ssids}
+	execTemplate(w, managementTemplatePath, ManagementData{Ssids: ssids, Page: "ssids"})
+}
 
-	// parse template
-	execTemplate(w, managementTemplatePath, data)
+// SaveConfigHandler saves config received as form post parameters
+func SaveConfigHandler(w http.ResponseWriter, r *http.Request) {
+	// read previous config
+	config, err := utils.ReadConfig()
+	if err != nil {
+		msg := fmt.Sprintf("Error reading previous stored config: %v", err)
+		log.Println(msg)
+		http.Error(w, msg, http.StatusInternalServerError)
+		return
+	}
+
+	r.ParseForm()
+
+	config.Wifi.Ssid = utils.ParseFormParamSingleValue(r.Form, "Ssid")
+	config.Wifi.Passphrase = utils.ParseFormParamSingleValue(r.Form, "Passphrase")
+	config.Wifi.Interface = utils.ParseFormParamSingleValue(r.Form, "Interface")
+	config.Wifi.CountryCode = utils.ParseFormParamSingleValue(r.Form, "CountryCode")
+	config.Wifi.Channel, err = strconv.Atoi(utils.ParseFormParamSingleValue(r.Form, "Channel"))
+	if err != nil {
+		msg := fmt.Sprintf("Error parsing channel form value: %v", err)
+		log.Println(msg)
+		http.Error(w, msg, http.StatusInternalServerError)
+		return
+	}
+	config.Wifi.OperationMode = utils.ParseFormParamSingleValue(r.Form, "OperationMode")
+	config.Portal.Password = utils.ParseFormParamSingleValue(r.Form, "PortalPassword")
+
+	err = utils.WriteConfig(config)
+	if err != nil {
+		msg := fmt.Sprintf("Error saving config: %v", err)
+		log.Println(msg)
+		http.Error(w, msg, http.StatusInternalServerError)
+		return
+	}
+
+	//after saving config, redirect to management portal, showing available ssids
+	ssids, err := utils.ReadSsidsFile()
+	if err != nil {
+		msg := fmt.Sprintf("== wifi-connect/handler: Error reading SSIDs file: %v\n", err)
+		log.Println(msg)
+		http.Error(w, msg, http.StatusInternalServerError)
+		return
+	}
+
+	execTemplate(w, managementTemplatePath, ManagementData{Ssids: ssids, Page: "ssids"})
 }
 
 // ConnectHandler reads form got ssid and password and tries to connect to that network
 func ConnectHandler(w http.ResponseWriter, r *http.Request) {
-
 	r.ParseForm()
 
 	pwd := ""
@@ -103,7 +177,9 @@ func ConnectHandler(w http.ResponseWriter, r *http.Request) {
 
 	ssids := r.Form["ssid"]
 	if len(ssids) == 0 {
-		log.Print("SSID not available")
+		msg := "SSID not available"
+		log.Print(msg)
+		http.Error(w, msg, http.StatusBadRequest)
 		return
 	}
 	ssid := ssids[0]
@@ -116,7 +192,9 @@ func ConnectHandler(w http.ResponseWriter, r *http.Request) {
 
 		err := wifiapClient.Disable()
 		if err != nil {
-			log.Printf("Error disabling AP: %v", err)
+			msg := fmt.Sprintf("Error disabling AP: %v", err)
+			log.Print(msg)
+			http.Error(w, msg, http.StatusInternalServerError)
 			return
 		}
 
@@ -127,7 +205,9 @@ func ConnectHandler(w http.ResponseWriter, r *http.Request) {
 		err = netmanClient.ConnectAp(ssid, pwd, ap2device, ssid2ap)
 		//TODO signal user in portal on failure to connect
 		if err != nil {
-			log.Printf("Failed connecting to %v.", ssid)
+			msg := fmt.Sprintf("Failed connecting to %v", ssid)
+			log.Println(msg)
+			http.Error(w, msg, http.StatusInternalServerError)
 			return
 		}
 

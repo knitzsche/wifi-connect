@@ -1,3 +1,6 @@
+!/.gitignore
+*.snap
+*.tar.bz2
 # testing files
 .coverage
 .tests-extras
@@ -11,4 +14,3 @@ parts/
 prime/
 snap/.snapcraft/
 stage/
-*.snap

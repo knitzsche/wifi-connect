@@ -40,7 +40,7 @@ var HashFile = filepath.Join(os.Getenv("SNAP_COMMON"), "hash")
 
 // HashIt writes the hash of the passed password to the HashFile and
 // returns the hash and error
-func HashIt(s string) ([]byte, error) {
+var HashIt = func(s string) ([]byte, error) {
 	var b []byte
 	var err error
 	b, err = bcrypt.GenerateFromPassword([]byte(s), 8)
@@ -153,4 +153,13 @@ func RunningOn(address string) bool {
 		return false
 	}
 	return true
+}
+
+// ParseFormParamSingleValue extracts single value from a http post request
+func ParseFormParamSingleValue(form map[string][]string, key string) string {
+	vals := form[key]
+	if len(vals) > 0 {
+		return vals[0]
+	}
+	return ""
 }

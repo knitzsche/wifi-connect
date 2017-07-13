@@ -10,3 +10,7 @@ gulp.task('sass', function() {
     .pipe(uglifycss())
     .pipe(gulp.dest('static/css'));
 });
+
+// Default: remember that these tasks get run asynchronously
+gulp.task('default', ['sass']);
+

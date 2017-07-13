@@ -56,6 +56,10 @@ func (c *wifiapClientMock) SetPassphrase(string) error {
 	return nil
 }
 
+func (c *wifiapClientMock) Set(map[string]interface{}) error {
+	return nil
+}
+
 type netmanClientMock struct{}
 
 func (c *netmanClientMock) GetDevices() []string {
@@ -110,6 +114,26 @@ func (c *netmanClientMock) ScanAndWriteSsidsToFile(filepath string) bool {
 }
 
 func TestManagementHandler(t *testing.T) {
+
+	// mock settings to not to ask for saving a first configuration
+	utils.ReadConfig = func() (*utils.Config, error) {
+		return &utils.Config{
+			Wifi: &utils.WifiConfig{
+				Ssid:          "Ubuntu",
+				Passphrase:    "17Soj8/Sxh14lcpD",
+				Interface:     "wlp2s0",
+				CountryCode:   "0x31",
+				Channel:       6,
+				OperationMode: "g",
+			},
+			Portal: &utils.PortalConfig{
+				Password:           "the_password",
+				NoResetCredentials: true,
+				NoOperational:      false,
+			},
+		}, nil
+	}
+	utils.MustSetConfig = func() bool { return false }
 
 	ResourcesPath = "../static"
 	SsidsFile := "../static/tests/ssids"
