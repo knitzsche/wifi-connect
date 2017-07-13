@@ -1,4 +1,16 @@
-.*
 !/.gitignore
 *.snap
 *.tar.bz2
+# testing files
+.coverage
+.tests-extras
+
+# editor files
+*.swp
+*~
+
+# snapcraft files
+parts/
+prime/
+snap/.snapcraft/
+stage/

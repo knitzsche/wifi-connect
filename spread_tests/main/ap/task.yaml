@@ -44,7 +44,7 @@ execute: |
     # This is a known issue, see comments here https://github.com/CanonicalLtd/UCWifiConnect/issues/38
     sleep 40
     wifi-connect stop
-    until journalctl | grep '== wifi-connect: entering MANUAL mode' ; do
+    until journalctl | grep 'entering MANUAL mode' ; do
         sleep 5
         wifi-connect stop
     done

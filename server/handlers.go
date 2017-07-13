@@ -73,7 +73,7 @@ func execTemplate(w http.ResponseWriter, templatePath string, data Data) {
 	templateAbsPath := filepath.Join(ResourcesPath, templatePath)
 	t, err := template.ParseFiles(templateAbsPath)
 	if err != nil {
-		msg := fmt.Sprintf("== wifi-connect/handler: Error loading the template at %v : %v", templatePath, err)
+		msg := fmt.Sprintf("Error loading the template at %v: %v", templatePath, err)
 		log.Println(msg)
 		http.Error(w, msg, http.StatusInternalServerError)
 		return
@@ -81,8 +81,8 @@ func execTemplate(w http.ResponseWriter, templatePath string, data Data) {
 
 	err = t.Execute(w, data)
 	if err != nil {
-		msg := fmt.Sprintf("== wifi-connect/handler: Error executing the template at %v : %v", templatePath, err)
-		log.Println(msg)
+		msg := fmt.Sprintf("Error executing the template at %v : %v", templatePath, err)
+		log.Print(msg)
 		http.Error(w, msg, http.StatusInternalServerError)
 		return
 	}
@@ -110,9 +110,8 @@ func ManagementHandler(w http.ResponseWriter, r *http.Request) {
 
 	ssids, err := utils.ReadSsidsFile()
 	if err != nil {
-		msg := fmt.Sprintf("== wifi-connect/handler: Error reading SSIDs file: %v", err)
-		log.Println(msg)
-		http.Error(w, msg, http.StatusInternalServerError)
+		log.Printf("Error reading SSIDs file: %v", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -179,7 +178,7 @@ func ConnectHandler(w http.ResponseWriter, r *http.Request) {
 	ssids := r.Form["ssid"]
 	if len(ssids) == 0 {
 		msg := "SSID not available"
-		log.Println(msg)
+		log.Print(msg)
 		http.Error(w, msg, http.StatusBadRequest)
 		return
 	}
@@ -189,12 +188,12 @@ func ConnectHandler(w http.ResponseWriter, r *http.Request) {
 	execTemplate(w, connectingTemplatePath, data)
 
 	go func() {
-		log.Println(Sprintf("Connecting to %v", ssid))
+		log.Printf("Connecting to %v", ssid)
 
 		err := wifiapClient.Disable()
 		if err != nil {
-			msg := fmt.Sprintf("Error disabling AP: %v\n", err)
-			log.Println(msg)
+			msg := fmt.Sprintf("Error disabling AP: %v", err)
+			log.Print(msg)
 			http.Error(w, msg, http.StatusInternalServerError)
 			return
 		}
@@ -217,7 +216,6 @@ func ConnectHandler(w http.ResponseWriter, r *http.Request) {
 		waitPath := os.Getenv("SNAP_COMMON") + "/startingApConnect"
 		utils.RemoveFlagFile(waitPath)
 	}()
-
 }
 
 type disconnectData struct {
@@ -240,7 +238,7 @@ func HashItHandler(w http.ResponseWriter, r *http.Request) {
 	hashMe := r.Form["Hash"]
 	hashed, errH := utils.MatchingHash(hashMe[0])
 	if errH != nil {
-		fmt.Println("== wifi-connect/HashitHandler: error hashing:", errH)
+		log.Printf("HashItHandler: error hashing: %v", errH)
 		return
 	}
 	res := &hashResponse{}
@@ -248,7 +246,7 @@ func HashItHandler(w http.ResponseWriter, r *http.Request) {
 	res.Err = "no error"
 	b, err := json.Marshal(res)
 	if err != nil {
-		fmt.Println("== wifi-connect/HashItHandler: error mashaling json")
+		log.Printf("HashItHandler: error marshaling json")
 		return
 	}
 	w.Write(b)

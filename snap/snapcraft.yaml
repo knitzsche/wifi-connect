@@ -45,11 +45,12 @@ parts:
       # this part unit tests in your next compilation.
       if [ "$SKIP_TESTS" = "yes" ] || [ "$SKIP_TESTS" = "y" ]; then
         echo "skipping unit tests"
-        exit 0
+      else 
+        export GOPATH=$PWD/../go
+        cd $GOPATH/src/launchpad.net/wifi-connect
+        ./run-checks all
       fi
-      export GOPATH=$PWD/../go
-      cd $GOPATH/src/launchpad.net/wifi-connect
-      ./run-checks all
+      # configure hook
       mkdir -p $SNAPCRAFT_PART_INSTALL/snap/hooks
       mv $SNAPCRAFT_PART_INSTALL/bin/hooks $SNAPCRAFT_PART_INSTALL/snap/hooks/configure
   assets:

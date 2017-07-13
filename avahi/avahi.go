@@ -28,8 +28,6 @@ import (
 	"github.com/presotto/go-mdns-sd"
 )
 
-var logger *log.Logger
-
 type mdnsScanner interface {
 	ScanInterfaces() (string, error)
 }
@@ -56,10 +54,10 @@ func InitMDNS() error {
 	// these or snapweb has to be restarted
 	var err error
 	hostname := getHostname()
-	log.Println("Registering hostname:", hostname)
+	log.Printf("Registering hostname: %s", hostname)
 	_mdns, err = newMDNS(hostname, "", "", false, 0)
 	if err != nil {
-		log.Println("Cannot create mDNS instance:", err)
+		log.Printf("Cannot create mDNS instance: %v", err)
 		return fmt.Errorf("Cannot create mDNS instance: %s", err.Error())
 	}
 	// poll to update published IP addresses for this mDNS name; ideally
@@ -86,7 +84,7 @@ var osHostname = os.Hostname
 func getHostname() (hostname string) {
 	hostname, err := osHostname()
 	if err != nil {
-		logger.Println("Cannot obtain hostname, using default:", err)
+		log.Printf("Cannot obtain hostname, using default: %v", err)
 		return hostnameDefault
 	}
 	hostname = strings.Split(hostname, ".")[0]

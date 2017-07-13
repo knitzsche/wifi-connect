@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
 	"sort"
@@ -48,7 +49,7 @@ var HashIt = func(s string) ([]byte, error) {
 	}
 	errW := ioutil.WriteFile(HashFile, b, 0644)
 	if errW != nil {
-		fmt.Println("== wifi-connect/HashIt write Error.", err)
+		log.Printf("HashIt write Error. %v", err)
 		return b, errW
 	}
 	return b, nil
@@ -59,7 +60,7 @@ var HashIt = func(s string) ([]byte, error) {
 func MatchingHash(pword string) (bool, error) {
 	savedHash, err := ioutil.ReadFile(HashFile)
 	if err != nil {
-		fmt.Println("== wifi-connect/matchingHash read Error.", err)
+		log.Printf("matchingHash read Error. %v", err)
 		return false, err
 	}
 	if bcrypt.CompareHashAndPassword(savedHash, []byte(pword)) == nil {
