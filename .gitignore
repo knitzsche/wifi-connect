@@ -1,4 +1,4 @@
-!/.gitignore
+docs/build
 *.snap
 *.tar.bz2
 # testing files
