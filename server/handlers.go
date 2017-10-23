@@ -198,23 +198,24 @@ func ConnectHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		//connect
+		// manage iface by netman
 		netmanClient.SetIfaceManaged("wlan0", true, netmanClient.GetWifiDevices(netmanClient.GetDevices()))
 		_, ap2device, ssid2ap := netmanClient.Ssids()
 
+                // attempt to connect to external AP
 		err = netmanClient.ConnectAp(ssid, pwd, ap2device, ssid2ap)
 		//TODO signal user in portal on failure to connect
 		if err != nil {
+			//remove flag file so that daemon starts checking state
+			//and takes control again
+			waitPath := os.Getenv("SNAP_COMMON") + "/startingApConnect"
+			utils.RemoveFlagFile(waitPath)
 			msg := fmt.Sprintf("Failed connecting to %v", ssid)
 			log.Println(msg)
 			http.Error(w, msg, http.StatusInternalServerError)
 			return
 		}
 
-		//remove flag file so that daemon starts checking state
-		//and takes control again
-		waitPath := os.Getenv("SNAP_COMMON") + "/startingApConnect"
-		utils.RemoveFlagFile(waitPath)
 	}()
 }
 
